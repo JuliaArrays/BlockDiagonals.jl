@@ -15,7 +15,6 @@ using BlockDiagonals: blocks, have_equal_block_sizes
     a, b = rand(rng, N), rand(rng, N + N1)
     A′, B′ = A', B'
 
-
     @testset "AbstractArray" begin
 
         @test size(b1) == (N, N)
@@ -52,7 +51,6 @@ using BlockDiagonals: blocks, have_equal_block_sizes
         @test Matrix(b1) ≈ b1
         @test b1 ≈ Matrix(b1)
     end
-
 
     @testset "unary" begin
 

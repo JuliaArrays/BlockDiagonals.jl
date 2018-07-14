@@ -1,5 +1,8 @@
 module BlockDiagonals
 
+using BlockArrays, FillArrays
+import BlockArrays: nblocks, blocksize, getblock, setblock!, getblock!
+
 export BlockDiagonal, blocks
 
 import Base: size, diag, Matrix, chol, show, display, *, +, /, isapprox, transpose,
@@ -8,16 +11,34 @@ import Base: size, diag, Matrix, chol, show, display, *, +, /, isapprox, transpo
 import Base.LinAlg: A_mul_B!
 
 """
-    BlockDiagonal{T, V<:AbstractMatrix{T}} <: AbstractMatrix{T}
+    BlockDiagonal{T, V<:AbstractMatrix{T}} <: AbstractBlockMatrix{T}
 
-
+A BlockMatrix whose diagonal blocks are square, and whose off-diagonal blocks are zero.
 """
-struct BlockDiagonal{T, V<:AbstractMatrix{T}} <: AbstractMatrix{T}
+struct BlockDiagonal{T, V<:AbstractMatrix{T}} <: AbstractBlockMatrix{T}
     blocks::Vector{V}
     function BlockDiagonal(blocks::Vector{<:V}) where {T, V<:AbstractMatrix{T}}
         @assert all(is_square, blocks)
         return new{T, V}(blocks)
     end
+end
+
+# AbstractBlockMatrix interface.
+nblocks(A::BlockDiagonal) = (length(blocks(A)), length(blocks(A)))
+nblocks(A::BlockDiagonal, i::Int) = length(blocks(A))
+blocksize(A::BlockDiagonal, p::Int, q::Int) = (size(blocks(A)[p], 1), size(blocks(A)[q], 2))
+function getblock(A::BlockDiagonal{T}, p::Int, q::Int) where T
+    return p == q ? blocks(A)[p] : Zeros{T}(blocksize(A, p, q))
+end
+function setblock!(A::BlockDiagonal{T, V}, v::V, p::Int, q::Int) where {T, V}
+    p != q && throw(
+        ArgumentError("cannot set off-diagonal block ($p, $q) to a nonzero value"),
+    )
+    blocksize(A, p, q) != size(v) && throw(
+        DimensionMismatch("cannot set block of size $(blocksize(A, p, q)) to " *
+            "block of size $(size(v))")
+    )
+    blocks(A)[p] = v
 end
 
 @inline blocks(b::BlockDiagonal) = b.blocks
