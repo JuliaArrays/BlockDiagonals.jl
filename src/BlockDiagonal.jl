@@ -92,4 +92,104 @@ function (*)(b::BlockDiagonal, m::BlockDiagonal)
     end
 end
 
+function Ac_mul_B(b::BlockDiagonal, m::BlockDiagonal)
+    if size(b) == size(m) && size.(blocks(b)) == size.(blocks(m))
+        return BlockDiagonal(Ac_mul_B.(blocks(b), blocks(m)))
+    else
+        Ac_mul_B(Matrix(b), Matrix(m))
+    end
+end
+function Ac_mul_B(b::BlockDiagonal, m::AbstractMatrix)
+    size(b, 1) != size(m, 1) && throw(
+        DimensionMismatch("A has dimensions $(size(b)) but B has dimensions $(size(m'))")
+    )
+    st = 1
+    ed = 1
+    d = []
+    for block in blocks(b)
+        ed = st + size(block, 1) - 1
+        push!(d, Ac_mul_B(block, m[st:ed, :]))
+        st = ed + 1
+    end
+    return vcat(d...)
+end
+function Ac_mul_B(m::AbstractMatrix, b::BlockDiagonal)
+    size(b, 1) != size(m, 1) && throw(
+        DimensionMismatch("A has dimensions $(size(b)) but B has dimensions $(size(m'))")
+    )
+    st = 1
+    ed = 1
+    d = []
+    for block in blocks(b)
+        ed = st + size(block, 1) - 1
+        push!(d, Ac_mul_B(m[st:ed, :], block))
+        st = ed + 1
+    end
+    return hcat(d...)
+end
+function A_mul_Bc(b::BlockDiagonal, m::BlockDiagonal)
+    if size(b) == size(m) && size.(blocks(b)) == size.(blocks(m))
+        return BlockDiagonal(A_mul_Bc.(blocks(b), blocks(m)))
+    else
+        A_mul_Bc(Matrix(b), Matrix(m))
+    end
+end
+function A_mul_Bc(b::BlockDiagonal, m::AbstractMatrix)
+    size(b, 2) != size(m, 2) && throw(
+        DimensionMismatch("A has dimensions $(size(b)) but B has dimensions $(size(m'))")
+    )
+    st = 1
+    ed = 1
+    d = []
+    for block in blocks(b)
+        ed = st + size(block, 2) - 1
+        push!(d, A_mul_Bc(block, m[:, st:ed]))
+        st = ed + 1
+    end
+    return vcat(d...)
+end
+function A_mul_Bc(m::AbstractMatrix, b::BlockDiagonal)
+    size(b, 2) != size(m, 2) && throw(
+        DimensionMismatch("A has dimensions $(size(b)) but B has dimensions $(size(m'))")
+    )
+    st = 1
+    ed = 1
+    d = []
+    for block in blocks(b)
+        ed = st + size(block, 2) - 1
+        push!(d, A_mul_Bc(m[:, st:ed], block))
+        st = ed + 1
+    end
+    return hcat(d...)
+end
+(*)(b::BlockDiagonal, n::Real) = BlockDiagonal(n .* blocks(b))
+(*)(n::Real, b::BlockDiagonal) = b * n
+
+(/)(b::BlockDiagonal, n::Real) = BlockDiagonal(blocks(b) ./ n)
+
+function (+)(b::BlockDiagonal, m::AbstractMatrix)
+    !isdiag(m) && return Matrix(b) + m
+    size(b) != size(m) && throw(DimensionMismatch("Can't add matrices of different sizes."))
+    d = diag(m)
+    si = 1
+    sj = 1
+    nb = copy(blocks(b))
+    for i in 1:length(nb)
+        s = size(nb[i])
+        nb[i] += @view m[si:s[1] + si - 1, sj:s[2] + sj - 1]
+        si += s[1]
+        sj += s[2]
+    end
+    return BlockDiagonal(nb)
+end
+
+(+)(m::AbstractMatrix, b::BlockDiagonal) = b + m
+function (+)(b::BlockDiagonal, m::BlockDiagonal)
+    if size(b) == size(m) && size.(blocks(b)) == size.(blocks(m))
+        return BlockDiagonal(blocks(b) .+ blocks(m))
+    else
+        return Matrix(b) + Matrix(m)
+    end
+end
+
 end # end module
