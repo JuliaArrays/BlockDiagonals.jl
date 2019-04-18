@@ -33,12 +33,12 @@ blocks(b::BlockDiagonal) = b.blocks
 
 # AbstractBlockMatrix interface
 BlockArrays.blocksizes(b::BlockDiagonal) = b.block_sizes
-function BlockArrays.blocksize(b::BlockDiagonal, i::Int, j::Int)
+function BlockArrays.blocksize(b::BlockDiagonal, i::Integer, j::Integer)
     return first(size(blocks(b)[i])), last(size(blocks(b)[j]))
 end
 BlockArrays.nblocks(b::BlockDiagonal) = length(blocks(b)), length(blocks(b))
 BlockArrays.nblocks(b::BlockDiagonal, dims::Integer) = length(blocks(b))
-function BlockArrays.getblock(b::BlockDiagonal{T}, i::Int, j::Int) where T
+function BlockArrays.getblock(b::BlockDiagonal{T}, i::Integer, j::Integer) where T
     return i == j ? blocks(b)[i] : Zeros{T}(blocksize(b, i, j))
 end
 function BlockArrays.setblock!(b::BlockDiagonal{T, V}, v::V, p::Int, q::Int) where {T, V}
@@ -59,7 +59,7 @@ Base.size(b::BlockDiagonal) = sum(x -> size(x, 1), blocks(b)), sum(x -> size(x, 
 Base.similar(B::BlockDiagonal) = BlockDiagonal(similar.(blocks(B)))
 
 function Base.getindex(b::BlockDiagonal{T}, i::Int, j::Int) where T
-    cols = [size(bb, 2) for bb in blocks(b)]
+    cols = size.(blocks(b), 2)
     rows = [size(bb, 1) for bb in blocks(b)]
     c = 0
     while j > 0
