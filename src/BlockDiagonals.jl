@@ -24,7 +24,7 @@ end
 
 function BlockDiagonal(blocks::AbstractVector{<:AbstractMatrix})
     # mapreduce would give Array of Tuples; want Array of Arrays
-    bs = BlockSizes([[first(size(b)), last(size(b))] for b in blocks]...)
+    bs = BlockSizes(([first(size(b)), last(size(b))] for b in blocks)...)
     return BlockDiagonal(blocks, bs)
 end
 
