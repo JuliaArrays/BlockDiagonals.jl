@@ -1,8 +1,10 @@
-using Revise
-using Base.Test, BlockDiagonals
-using BlockDiagonals: blocks, have_equal_block_sizes
+using BlockDiagonals
+using BlockDiagonals: blocks, isequal_blocksizes
+using LinearAlgebra
+using Random
+using Test
 
-@testset "BlockDiagonals" begin let
+@testset "BlockDiagonals" begin
 
     rng = MersenneTwister(123456)
     N1, N2, N3 = 3, 4, 5
@@ -29,24 +31,24 @@ using BlockDiagonals: blocks, have_equal_block_sizes
         @test all(eqs)
     end
 
-    @testset "have_equal_block_sizes" begin
-        @test have_equal_block_sizes(b1, b1) == true
-        @test have_equal_block_sizes(b1, b2) == false
+    @testset "isequal_blocksizes" begin
+        @test isequal_blocksizes(b1, b1) == true
+        @test isequal_blocksizes(b1, b2) == false
     end
 
     @testset "equality" begin
 
-        # Equality.
+        # Equality
         @test b1 == b1
         @test b1 == Matrix(b1)
         @test Matrix(b1) == b1
 
-        # Inequality.
+        # Inequality
         @test b1 != b2
         @test b1 != Matrix(b2)
         @test Matrix(b1) != b2
 
-        # Approximate equality.
+        # Approximate equality
         @test b1 ≈ b1
         @test Matrix(b1) ≈ b1
         @test b1 ≈ Matrix(b1)
@@ -54,15 +56,15 @@ using BlockDiagonals: blocks, have_equal_block_sizes
 
     @testset "unary" begin
 
-        for foo in [eigvals, det, transpose, ctranspose, trace, diag]
-            @test foo(b1) ≈ foo(Matrix(b1))
+        for f in [adjoint, det, diag, eigvals, transpose, tr]
+            @test f(b1) ≈ f(Matrix(b1))
         end
 
-        # Construct a PSD matrix to check logdet.
+        # Construct a PSD matrix to check logdet
         b1′ = b1'
         b̂1 = b1 * b1′
         @test logdet(b̂1) ≈ logdet(Matrix(b̂1))
-        @test chol(b̂1) ≈ chol(Matrix(b̂1))
+        @test cholesky(b̂1).U ≈ cholesky(Matrix(b̂1)).U
 
         @test similar(b1) isa BlockDiagonal
         @test size(similar(b1)) == size(b1)
@@ -71,17 +73,17 @@ using BlockDiagonals: blocks, have_equal_block_sizes
 
     @testset "addition" begin
 
-        # BlockDiagonal + BlockDiagonal.
+        # BlockDiagonal + BlockDiagonal
         @test b1 + b1 isa BlockDiagonal
         @test Matrix(b1 + b1) == Matrix(b1) + Matrix(b1)
         @test_throws DimensionMismatch b1 + b3
 
-        # BlockDiagonal + Matrix.
+        # BlockDiagonal + Matrix
         @test b1 + Matrix(b1) isa Matrix
         @test b1 + Matrix(b1) == b1 + b1
         @test_throws DimensionMismatch b1 + Matrix(b3)
 
-        # Matrix + BlockDiagonal.
+        # Matrix + BlockDiagonal
         @test Matrix(b1) + b1 isa Matrix
         @test Matrix(b1) + b1 == b1 + b1
         @test_throws DimensionMismatch Matrix(b1) + b3
@@ -109,10 +111,7 @@ using BlockDiagonals: blocks, have_equal_block_sizes
 
     @testset "multiplication" begin
 
-        # BlockDiagonal * BlockDiagonal.
-        @test A_mul_B!(similar(b1), b1, b1) isa BlockDiagonal
-        @test A_mul_B!(similar(b1), b1, b1) ≈ Matrix(b1) * Matrix(b1)
-        @test A_mul_B!(similar(Matrix(b1)), b1, b1) ≈ Matrix(b1) * Matrix(b1)
+        # BlockDiagonal * BlockDiagonal
         @test b1 * b1 isa BlockDiagonal
         @test Matrix(b1 * b1) ≈ Matrix(b1) * Matrix(b1)
         @test_throws DimensionMismatch b3 * b1
@@ -124,8 +123,6 @@ using BlockDiagonals: blocks, have_equal_block_sizes
 
         # BlockDiagonal * Matrix.
         C = randn(size(b1, 1), size(A, 2))
-        @test A_mul_B!(C, b1, A) isa Matrix
-        @test A_mul_B!(C, b1, A) ≈ Matrix(b1) * A
         @test b1 * A isa Matrix
         @test b1 * A ≈ Matrix(b1) * A
         @test_throws DimensionMismatch b1 * B
@@ -136,4 +133,4 @@ using BlockDiagonals: blocks, have_equal_block_sizes
         @test_throws DimensionMismatch A * b1
     end
 
-end end
+end

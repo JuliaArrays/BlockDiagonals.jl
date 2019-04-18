@@ -1,78 +1,64 @@
 module BlockDiagonals
 
-using BlockArrays, FillArrays
-import BlockArrays: nblocks, blocksize, getblock, setblock!, getblock!
+using BlockArrays
+using BlockArrays: AbstractBlockSizes, BlockSizes
+using FillArrays
+using LinearAlgebra
 
 export BlockDiagonal, blocks
-
-import Base: size, diag, Matrix, chol, show, display, *, +, /, isapprox, transpose,
-    Ac_mul_B, A_mul_Bc, getindex, ctranspose, det, logdet, eigvals, trace, similar
-
-import Base.LinAlg: A_mul_B!
 
 """
     BlockDiagonal{T, V<:AbstractMatrix{T}} <: AbstractBlockMatrix{T}
 
-A BlockMatrix whose diagonal blocks are square, and whose off-diagonal blocks are zero.
+A BlockMatrix with square blocks on the diagonal, and zeros off the diagonal.
 """
-struct BlockDiagonal{T, V<:AbstractMatrix{T}} <: AbstractBlockMatrix{T}
-    blocks::Vector{V}
-    function BlockDiagonal(blocks::Vector{<:V}) where {T, V<:AbstractMatrix{T}}
-        @assert all(is_square, blocks)
-        return new{T, V}(blocks)
+struct BlockDiagonal{T, S<:AbstractBlockSizes} <: AbstractBlockMatrix{T}
+    blocks::Vector{<:AbstractMatrix{T}}
+    block_sizes::S
+    function BlockDiagonal(blocks::Vector{<:AbstractMatrix{T}}, sizes::S) where {T, S<:AbstractBlockSizes}
+        all(is_square, blocks) || throw(ArgumentError("All blocks must be square."))
+        # mapreduce would give Array of Tuples; want Array of Arrays
+        return new{T, S}(blocks, sizes)
     end
 end
 
-# AbstractBlockMatrix interface.
-nblocks(A::BlockDiagonal) = (length(blocks(A)), length(blocks(A)))
-nblocks(A::BlockDiagonal, i::Int) = length(blocks(A))
-blocksize(A::BlockDiagonal, p::Int, q::Int) = (size(blocks(A)[p], 1), size(blocks(A)[q], 2))
-function getblock(A::BlockDiagonal{T}, p::Int, q::Int) where T
-    return p == q ? blocks(A)[p] : Zeros{T}(blocksize(A, p, q))
-end
-function setblock!(A::BlockDiagonal{T, V}, v::V, p::Int, q::Int) where {T, V}
-    p != q && throw(
-        ArgumentError("cannot set off-diagonal block ($p, $q) to a nonzero value"),
-    )
-    blocksize(A, p, q) != size(v) && throw(
-        DimensionMismatch("cannot set block of size $(blocksize(A, p, q)) to " *
-            "block of size $(size(v))")
-    )
-    blocks(A)[p] = v
+function BlockDiagonal(blocks::AbstractVector{<:AbstractMatrix})
+    # mapreduce would give Array of Tuples; want Array of Arrays
+    bs = BlockSizes([[first(size(b)), last(size(b))] for b in blocks]...)
+    return BlockDiagonal(blocks, bs)
 end
 
-@inline blocks(b::BlockDiagonal) = b.blocks
-diag(b::BlockDiagonal) = vcat(diag.(blocks(b))...)
+is_square(A::AbstractMatrix) = size(A, 1) === size(A, 2)
+blocks(b::BlockDiagonal) = b.blocks
 
-function have_equal_block_sizes(A::BlockDiagonal, B::BlockDiagonal)::Bool
-    size(A) == size(B) || return false
-    for m in eachindex(blocks(A))
-        size(blocks(A)[m]) == size(blocks(B)[m]) || return false
+# AbstractBlockMatrix interface
+BlockArrays.blocksizes(b::BlockDiagonal) = b.block_sizes
+function BlockArrays.blocksize(b::BlockDiagonal, i::Int, j::Int)
+    return first(size(blocks(b)[i])), last(size(blocks(b)[j]))
+end
+BlockArrays.nblocks(b::BlockDiagonal) = length(blocks(b)), length(blocks(b))
+BlockArrays.nblocks(b::BlockDiagonal, dims::Integer) = length(blocks(b))
+function BlockArrays.getblock(b::BlockDiagonal{T}, i::Int, j::Int) where T
+    return i == j ? blocks(b)[i] : Zeros{T}(blocksize(b, i, j))
+end
+function BlockArrays.setblock!(b::BlockDiagonal{T, V}, v::V, p::Int, q::Int) where {T, V}
+    if p != q
+        throw(brgumentError("Cannot set off-diagonal block ($p, $q) to a nonzero value."))
     end
-    return true
+    if blocksize(b, p, q) != size(v)
+        throw(DimensionMismatch(string(
+            "Cannot set block of size $(blocksize(b, p, q)) to block of size $(size(v))"
+        )))
+    end
+    blocks(b)[p] = v
 end
-@inline is_square(A::AbstractMatrix) = size(A, 1) == size(A, 2)
 
-size(b::BlockDiagonal) = sum(x->size(x, 1), blocks(b)), sum(x->size(x, 2), blocks(b))
 
-similar(B::BlockDiagonal) = BlockDiagonal(similar.(blocks(B)))
+Base.Matrix(b::BlockDiagonal) = cat(blocks(b)...; dims=(1, 2))
+Base.size(b::BlockDiagonal) = sum(x -> size(x, 1), blocks(b)), sum(x -> size(x, 2), blocks(b))
+Base.similar(B::BlockDiagonal) = BlockDiagonal(similar.(blocks(B)))
 
-Matrix(b::BlockDiagonal) = cat([1, 2], blocks(b)...)
-
-chol(b::BlockDiagonal) = BlockDiagonal(chol.(blocks(b)))
-det(b::BlockDiagonal) = prod(det, blocks(b))
-logdet(b::BlockDiagonal) = sum(logdet, blocks(b))
-function eigvals(b::BlockDiagonal)
-    eigs = vcat(eigvals.(blocks(b))...)
-    !isa(eigs, Vector{<:Complex}) && return sort(eigs)
-    return eigs
-end
-trace(b::BlockDiagonal) = sum(trace, blocks(b))
-
-transpose(b::BlockDiagonal) = BlockDiagonal(transpose.(blocks(b)))
-ctranspose(b::BlockDiagonal) = BlockDiagonal(ctranspose.(blocks(b)))
-
-function getindex(b::BlockDiagonal{T}, i::Int, j::Int) where T
+function Base.getindex(b::BlockDiagonal{T}, i::Int, j::Int) where T
     cols = [size(bb, 2) for bb in blocks(b)]
     rows = [size(bb, 1) for bb in blocks(b)]
     c = 0
@@ -85,116 +71,171 @@ function getindex(b::BlockDiagonal{T}, i::Int, j::Int) where T
     return blocks(b)[c][i, end + j]
 end
 
-
-
-########################### Addition #############################
-
-function +(A::BlockDiagonal, B::BlockDiagonal)::Union{Matrix, BlockDiagonal}
-    size(A) != size(B) && throw(DimensionMismatch("dimensions must match"))
-    return size(blocks(A)) == size(blocks(B)) ?
-        BlockDiagonal(blocks(A) .+ blocks(B)) :
-        Matrix(A) + Matrix(B)
+function Base.isapprox(b1::BlockDiagonal, b2::BlockDiagonal; atol::Real=0)
+    return isequal_blocksizes(b1, b2) && all(isapprox.(blocks(b1), blocks(b2); atol=atol))
 end
 
-function +(A::BlockDiagonal, B::StridedMatrix)::Matrix
-    size(A) != size(B) && throw(DimensionMismatch("dimensions must match"))
-    C = copy(B)
-    row = 1
-    for (j, block) in enumerate(blocks(A))
-        rows = row:row + size(block, 1) - 1
-        C[rows, rows] .+= block
-        row += size(block, 1)
+function Base.isapprox(b::BlockDiagonal, m::AbstractMatrix; atol::Real=0)
+    return isapprox(Matrix(m), b, atol=atol)
+end
+
+function Base.isapprox(m::AbstractMatrix, b::BlockDiagonal; atol::Real=0)
+    return isapprox(m, Matrix(b), atol=atol)
+end
+
+function isequal_blocksizes(b1::BlockDiagonal, b2::BlockDiagonal)::Bool
+    size(b1) === size(b2) || return false
+    for m in eachindex(blocks(b1))
+        size(blocks(b1)[m]) === size(blocks(b2)[m]) || return false
     end
-    return C
+    return true
 end
-@inline +(A::StridedMatrix, B::BlockDiagonal) = B + A
 
-function +(A::BlockDiagonal, B::Diagonal)
-    size(A) != size(B) && throw(DimensionMismatch("dimensions must match"))
-    C = similar(A)
+## Addition
+function Base.:+(b1::BlockDiagonal, b2::BlockDiagonal)
+    if size(b1) == size(b2) && size.(blocks(b1)) == size.(blocks(b2))
+        return BlockDiagonal(blocks(b1) .+ blocks(b2))
+    else
+        return Matrix(b1) + Matrix(b2)
+    end
+end
+
+Base.:+(m::AbstractMatrix, b::BlockDiagonal) = b + m
+function Base.:+(b::BlockDiagonal, m::AbstractMatrix)
+    !isdiag(m) && return Matrix(b) + m
+    size(b) != size(m) && throw(DimensionMismatch("Can't add matrices of different sizes."))
+    d = diag(m)
+    si = 1
+    sj = 1
+    nb = copy(blocks(b))
+    for i in 1:length(nb)
+        s = size(nb[i])
+        nb[i] += @view m[si:s[1] + si - 1, sj:s[2] + sj - 1]
+        si += s[1]
+        sj += s[2]
+    end
+    return BlockDiagonal(nb)
+end
+
+# function +(A::BlockDiagonal, B::StridedMatrix)::Matrix
+#     size(A) != size(B) && throw(DimensionMismatch("dimensions must match"))
+#     C = copy(B)
+#     row = 1
+#     for (j, block) in enumerate(blocks(A))
+#         rows = row:row + size(block, 1) - 1
+#         C[rows, rows] .+= block
+#         row += size(block, 1)
+#     end
+#     return C
+# end
+
+Base.:+(m::Diagonal, b::BlockDiagonal) = b + m
+function Base.:+(b::BlockDiagonal, m::Diagonal)
+    size(b) != size(m) && throw(DimensionMismatch("Can't add matrices of different sizes."))
+    C = similar(b)
     row = 1
-    for (j, block) in enumerate(blocks(A))
+    for (j, block) in enumerate(blocks(b))
         rows = row:row + size(block, 1) - 1
         block_C = blocks(C)[j]
         block_C .= block
         for (k, r) in enumerate(rows)
-            block_C[k, k] += B.diag[r]
+            block_C[k, k] += diag(m)[r]
         end
         row += size(block, 1)
     end
     return C
 end
-@inline +(A::Diagonal, B::BlockDiagonal) = B + A
 
-+(A::BlockDiagonal, B::UniformScaling) = BlockDiagonal([block + B for block in blocks(A)])
-+(A::UniformScaling, B::BlockDiagonal) = B + A
+Base.:+(m::UniformScaling, b::BlockDiagonal) = b + m
+function Base.:+(b::BlockDiagonal, m::UniformScaling)
+    return BlockDiagonal([block + m for block in blocks(b)])
+end
 
 
+## Multiplication
+Base.:*(b::BlockDiagonal, n::Real) = BlockDiagonal(n .* blocks(b))
+Base.:*(n::Real, b::BlockDiagonal) = b * n
 
-################# BlockDiagonal * BlockDiagonal ##################
-
-function A_mul_B!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal)::BlockDiagonal
-    size(A) != size(B) && throw(DimensionMismatch("dimensions must match"))
-    size(C) != size(B) && throw(DimensionMismatch("dimensions must match"))
-    have_equal_block_sizes(A, B) || throw(DimensionMismatch("block dimensions must match"))
-    have_equal_block_sizes(C, A) || throw(DimensionMismatch("block dimensions must match"))
-    for m in eachindex(blocks(C))
-        A_mul_B!(blocks(C)[m], blocks(A)[m], blocks(B)[m])
+function Base.:*(b::BlockDiagonal, m::BlockDiagonal)
+    if size(b) == size(m) && size.(blocks(b)) == size.(blocks(m))
+        return BlockDiagonal(blocks(b) .* blocks(m))
+    else
+        return Matrix(b) * Matrix(m)
     end
-    return C
-end
-function A_mul_B!(C::StridedMatrix, A::BlockDiagonal, B::BlockDiagonal)
-    size(A) != size(B) && throw(DimensionMismatch("dimensions must match"))
-    size(C) != size(B) && throw(DimensionMismatch("dimensions must match"))
-    return A_mul_B!(C, Matrix(A), Matrix(B))
-end
-function *(A::BlockDiagonal, B::BlockDiagonal)::Union{Matrix, BlockDiagonal}
-    return A_mul_B!(have_equal_block_sizes(A, B) ? similar(A) : Matrix(similar(A)), A, B)
 end
 
-
-
-################### BlockDiagonal * Matrix ####################
-
-function A_mul_B!(C::StridedMatrix, A::BlockDiagonal, B::StridedMatrix)
-    size(A, 2) != size(B, 1) && throw(
-        DimensionMismatch("A has dimensions $(size(A)) but B has dimensions $(size(B))")
-    )
-    size(C) != (size(A, 1), size(B, 2)) && throw(
-        DimensionMismatch("A has size $(size(A)), B has size $(size(B)), " *
-            "C has size $(size(C))")
-    )
-    row = 1
-    for (j, block) in enumerate(blocks(A))
-        rows = row:row + size(block, 1) - 1
-        A_mul_B!(view(C, rows, :), block, view(B, rows, :))
-        row += size(block, 1)
+function Base.:*(b::BlockDiagonal, m::AbstractMatrix)
+    if size(b, 2) !== size(m, 1)
+        throw(DimensionMismatch("Cannot multiply matrices of size $(size(b)) and $(size(m))."))
     end
-    return C
-end
-function *(A::BlockDiagonal{T}, B::StridedMatrix{V}) where {T, V}
-    return A_mul_B!(Matrix{promote_type(T, V)}(size(A, 1), size(B, 2)), A, B)
-end
-
-
-
-################### Matrix * BlockDiagonal #####################
-
-function A_mul_B!(C::StridedMatrix, A::StridedMatrix, B::BlockDiagonal)
-    size(A, 2) != size(B, 1) && throw(
-        DimensionMismatch("A has dimensions $(size(A)) but B has dimensions $(size(B))")
-    )
-    size(C) != (size(A, 1), size(B, 2)) && throw(
-        DimensionMismatch("A has size $(size(A)), B has size $(size(B)), " *
-            "C has size $(size(C))")
-    )
-    col = 1
-    for (j, block) in enumerate(blocks(B))
-        cols = col:col + size(block, 2) - 1
-        A_mul_B!(view(C, :, cols), view(A, :, cols), block)
-        col += size(block, 1)
+    st = 1
+    ed = 1
+    d = []
+    for block in blocks(b)
+        ed = st + size(block, 2) - 1
+        push!(d, block * m[st:ed, :])
+        st = ed + 1
     end
-    return C
+    return reduce(vcat, d)
 end
 
-end # end module
+function Base.:*(m::AbstractMatrix, b::BlockDiagonal)
+    if size(b, 1) != size(m, 2)
+        throw(DimensionMismatch("Cannot multiply matrices of size $(size(b)) and $(size(m))."))
+    end
+    st = 1
+    ed = 1
+    d = []
+    for block in blocks(b)
+        ed = st + size(block, 1) - 1
+        push!(d, m[:, st:ed] * block)
+        st = ed + 1
+    end
+    return reduce(hcat, d)
+end
+
+## Division
+Base.:/(b::BlockDiagonal, n::Real) = BlockDiagonal(blocks(b) ./ n)
+
+## LinearAlgebra methods
+function LinearAlgebra.cholesky(B::BlockDiagonal)
+    C = BlockDiagonal(map(b -> cholesky(b).U, blocks(B)))
+    return Cholesky(C, 'U', 0)
+end
+
+function LinearAlgebra.eigvals(b::BlockDiagonal)
+    eigs = mapreduce(eigvals, vcat, blocks(b))
+    eigs isa Vector{<:Complex} && return eigs
+    return sort(eigs)
+end
+
+
+LinearAlgebra.transpose(b::BlockDiagonal) = BlockDiagonal(transpose.(blocks(b)))
+LinearAlgebra.adjoint(b::BlockDiagonal) = BlockDiagonal(adjoint.(blocks(b)))
+
+LinearAlgebra.det(b::BlockDiagonal) = prod(det, blocks(b))
+LinearAlgebra.logdet(b::BlockDiagonal) = sum(logdet, blocks(b))
+
+LinearAlgebra.tr(b::BlockDiagonal) = sum(tr, blocks(b))
+LinearAlgebra.diag(b::BlockDiagonal) = mapreduce(diag, vcat, blocks(b))
+
+# Make getproperty on a Cholesky factorized BlockDiagonal return another BlockDiagonal
+# where each block is an upper or lower triangular matrix. This ensures that optimizations
+# for BlockDiagonal matrices are preserved, though it comes at the cost of reallocating
+# a vector of triangular wrappers on each call.
+function Base.getproperty(C::Cholesky{T, BlockDiagonal{T}}, x::Symbol) where T
+    B = getfield(C, :factors)
+    uplo = getfield(C, :uplo)
+    f = if x === :U
+        uplo === 'U' ? UpperTriangular : (X -> UpperTriangular(X'))
+    elseif x === :L
+        uplo === 'L' ? LowerTriangular : (X -> LowerTriangular(X'))
+    elseif x === :UL
+        uplo === 'U' ? UpperTriangular : LowerTriangular
+    else
+        return getfield(C, x)
+    end
+    return BlockDiagonal{T}(map(f, blocks(B)))
+end
+
+end  # end module
