@@ -6,53 +6,78 @@ using FillArrays
 using LinearAlgebra
 
 export BlockDiagonal, blocks
+# reexport core interfaces from BlockArrays
+export Block, BlockSizes, blocksize, blocksizes, nblocks
 
 """
-    BlockDiagonal{T, V<:AbstractMatrix{T}} <: AbstractBlockMatrix{T}
+    BlockDiagonal{T, V<:AbstractMatrix{T}, S<:AbstractBlockSizes} <: AbstractBlockMatrix{T}
 
 A BlockMatrix with square blocks on the diagonal, and zeros off the diagonal.
 """
-struct BlockDiagonal{T, S<:AbstractBlockSizes} <: AbstractBlockMatrix{T}
-    blocks::Vector{<:AbstractMatrix{T}}
-    block_sizes::S
-    function BlockDiagonal(blocks::Vector{<:AbstractMatrix{T}}, sizes::S) where {T, S<:AbstractBlockSizes}
+struct BlockDiagonal{T, V<:AbstractMatrix{T}, S<:AbstractBlockSizes} <: AbstractBlockMatrix{T}
+    blocks::Vector{V}
+    blocksizes::S
+
+    function BlockDiagonal(blocks::Vector{<:V}, sizes::S) where {T, V<:AbstractMatrix{T}, S<:AbstractBlockSizes}
         all(is_square, blocks) || throw(ArgumentError("All blocks must be square."))
-        # mapreduce would give Array of Tuples; want Array of Arrays
-        return new{T, S}(blocks, sizes)
+        return new{T, V, S}(blocks, sizes)
     end
 end
 
 function BlockDiagonal(blocks::AbstractVector{<:AbstractMatrix})
-    # mapreduce would give Array of Tuples; want Array of Arrays
-    bs = BlockSizes(([first(size(b)), last(size(b))] for b in blocks)...)
-    return BlockDiagonal(blocks, bs)
+    # mapreduce would give Tuples; need Arrays
+    sizes = BlockSizes(([size(b, 1), size(b, 2)] for b in blocks)...)
+    return BlockDiagonal(blocks, sizes)
 end
+
+BlockDiagonal(B::BlockDiagonal) = copy(B)
 
 is_square(A::AbstractMatrix) = size(A, 1) === size(A, 2)
-blocks(b::BlockDiagonal) = b.blocks
+blocks(B::BlockDiagonal) = B.blocks
 
-# AbstractBlockMatrix interface
-BlockArrays.blocksizes(b::BlockDiagonal) = b.block_sizes
-function BlockArrays.blocksize(b::BlockDiagonal, i::Integer, j::Integer)
-    return first(size(blocks(b)[i])), last(size(blocks(b)[j]))
-end
-BlockArrays.nblocks(b::BlockDiagonal) = length(blocks(b)), length(blocks(b))
-BlockArrays.nblocks(b::BlockDiagonal, dims::Integer) = length(blocks(b))
-function BlockArrays.getblock(b::BlockDiagonal{T}, i::Integer, j::Integer) where T
-    return i == j ? blocks(b)[i] : Zeros{T}(blocksize(b, i, j))
-end
-function BlockArrays.setblock!(b::BlockDiagonal{T, V}, v::V, p::Int, q::Int) where {T, V}
-    if p != q
-        throw(brgumentError("Cannot set off-diagonal block ($p, $q) to a nonzero value."))
-    end
-    if blocksize(b, p, q) != size(v)
-        throw(DimensionMismatch(string(
-            "Cannot set block of size $(blocksize(b, p, q)) to block of size $(size(v))"
-        )))
-    end
-    blocks(b)[p] = v
+## AbstractBlockMatrix interface
+BlockArrays.blocksizes(B::BlockDiagonal) = B.blocksizes
+
+# Needs to be `Int` not `Integer` to avoid methods ambiguity. Can be changed after
+# BlockArrays v0.9 is released; see https://github.com/JuliaArrays/BlockArrays.jl/issues/82
+BlockArrays.blocksize(B::BlockDiagonal, p::Int) = size(blocks(B)[p])
+function BlockArrays.blocksize(B::BlockDiagonal, p::Int, q::Int)
+    return size(blocks(B)[p], 1), size(blocks(B)[q], 2)
 end
 
+# Needs to be `Int` not `Integer` to avoid methods ambiguity. Can be changed after
+# BlockArrays v0.9 is released; see https://github.com/JuliaArrays/BlockArrays.jl/issues/82
+BlockArrays.nblocks(B::BlockDiagonal, dim::Int) = dim > 2 ? 1 : length(blocks(B))
+BlockArrays.nblocks(B::BlockDiagonal) = length(blocks(B)), length(blocks(B))
+
+# Needs to be `Int` not `Integer` to avoid methods ambiguity. Can be changed after
+# BlockArrays v0.9 is released; see https://github.com/JuliaArrays/BlockArrays.jl/issues/82
+function BlockArrays.getblock(B::BlockDiagonal{T}, p::Int, q::Int) where T
+    return p == q ? blocks(B)[p] : Zeros{T}(blocksize(B, p, q))
+end
+
+# Allow `B[Block(i)]` as shorthand for i^th diagonal block, i.e. `B[Block(i, i)]`
+BlockArrays.getblock(B::BlockDiagonal, p::Integer) = blocks(B)[p]
+
+Base.getindex(B::BlockDiagonal, block::Block{1}) = getblock(B, block.n[1])
+
+Base.setindex!(B::BlockDiagonal, v, block::Block{1}) = setblock!(B, v, block.n[1])
+
+function BlockArrays.setblock!(B::BlockDiagonal{T, V}, v::V, p::Integer) where {T, V}
+    if blocksize(B, p) != size(v)
+        throw(DimensionMismatch(
+            "Cannot set block of size $(blocksize(B, p)) to block of size $(size(v))."
+        ))
+    end
+    blocks(B)[p] = v
+end
+
+# Needs to be `Int` not `Integer` to avoid methods ambiguity. Can be changed after
+# BlockArrays v0.9 is released; see https://github.com/JuliaArrays/BlockArrays.jl/issues/82
+function BlockArrays.setblock!(B::BlockDiagonal{T, V}, v::V, p::Int, q::Int) where {T, V}
+    p == q || throw(ArgumentError("Cannot set off-diagonal block ($p, $q) to non-zero value."))
+    setblock!(B, v, p)
+end
 
 Base.Matrix(b::BlockDiagonal) = cat(blocks(b)...; dims=(1, 2))
 Base.size(b::BlockDiagonal) = sum(x -> size(x, 1), blocks(b)), sum(x -> size(x, 2), blocks(b))

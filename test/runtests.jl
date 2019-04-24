@@ -33,6 +33,7 @@ using Test
 
     @testset "isequal_blocksizes" begin
         @test isequal_blocksizes(b1, b1) == true
+        @test isequal_blocksizes(b1, similar(b1)) == true
         @test isequal_blocksizes(b1, b2) == false
     end
 
