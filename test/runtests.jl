@@ -174,4 +174,27 @@ using Test
         @test C.uplo === 'L'
         @test C.info == 0
     end
+
+    @testset "Singular Value Decomposition" begin
+        X = [  4  12 -16
+              12  37 -43
+             -16 -43  98]
+        B = BlockDiagonal([X, X])
+        @testset "full=$full" for full in (true, false)
+            F = svd(B; full=full)
+            @test F isa SVD{Float64, Float64, <:BlockDiagonal{Float64}}
+            # Matrices should be BlockDiagonal
+            @test F.U isa BlockDiagonal
+            @test F.V isa BlockDiagonal
+            @test F.Vt isa BlockDiagonal
+            # Should have same values, but not sorted so as to keep BlockDiagonal structure
+            F_ = svd(Matrix(B), full=full)
+            for fname in fieldnames(SVD)
+                @test sort(vec(getfield(F, fname))) ≈ sort(vec(getfield(F_, fname)))
+            end
+            # Singular values should be block-wise
+            s = svd(X).S
+            @test F.S ≈ vcat(s, s)
+        end
+    end
 end
