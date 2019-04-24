@@ -239,33 +239,48 @@ end
 ## Division
 Base.:/(b::BlockDiagonal, n::Real) = BlockDiagonal(blocks(b) ./ n)
 
-## LinearAlgebra methods
+## LinearAlgebra
+for f in (:adjoint, :eigvecs, :inv, :transpose)
+    @eval LinearAlgebra.$f(B::BlockDiagonal) = BlockDiagonal(map($f, blocks(B)))
+end
+
+LinearAlgebra.diag(B::BlockDiagonal) = mapreduce(diag, vcat, blocks(B))
+LinearAlgebra.det(B::BlockDiagonal) = prod(det, blocks(B))
+LinearAlgebra.logdet(B::BlockDiagonal) = sum(logdet, blocks(B))
+LinearAlgebra.tr(B::BlockDiagonal) = sum(tr, blocks(B))
+
+function LinearAlgebra.eigvals(B::BlockDiagonal)
+    eigs = mapreduce(eigvals, vcat, blocks(B))
+    eigs isa Vector{<:Complex} && return eigs
+    return sort(eigs)
+end
+
+"""
+    svd(B::BlockDiagonal{T}; full::Bool = false) -> SVD{T, T, BlockDiagonal{T}}
+
+Compute the SVD `F` of `B` such that `B = F.U * Diagonal(F.S) * F.Vt`, where
+`U`, `V`, and `Vt` are `BlockDiagonal`.
+
+Note that the singular values in `S` are not sorted.
+"""
+function LinearAlgebra.svd(B::BlockDiagonal; full::Bool=false)
+    Fs = svd.(blocks(B); full=full)
+    U = BlockDiagonal([F.U for F in Fs])
+    S = mapreduce(F -> F.S, vcat, Fs)
+    Vt = BlockDiagonal([F.Vt for F in Fs])
+    return SVD(U, S, Vt)
+end
+
 function LinearAlgebra.cholesky(B::BlockDiagonal)
     C = BlockDiagonal(map(b -> cholesky(b).U, blocks(B)))
     return Cholesky(C, 'U', 0)
 end
 
-function LinearAlgebra.eigvals(b::BlockDiagonal)
-    eigs = mapreduce(eigvals, vcat, blocks(b))
-    eigs isa Vector{<:Complex} && return eigs
-    return sort(eigs)
-end
-
-
-LinearAlgebra.transpose(b::BlockDiagonal) = BlockDiagonal(transpose.(blocks(b)))
-LinearAlgebra.adjoint(b::BlockDiagonal) = BlockDiagonal(adjoint.(blocks(b)))
-
-LinearAlgebra.det(b::BlockDiagonal) = prod(det, blocks(b))
-LinearAlgebra.logdet(b::BlockDiagonal) = sum(logdet, blocks(b))
-
-LinearAlgebra.tr(b::BlockDiagonal) = sum(tr, blocks(b))
-LinearAlgebra.diag(b::BlockDiagonal) = mapreduce(diag, vcat, blocks(b))
-
 # Make getproperty on a Cholesky factorized BlockDiagonal return another BlockDiagonal
 # where each block is an upper or lower triangular matrix. This ensures that optimizations
 # for BlockDiagonal matrices are preserved, though it comes at the cost of reallocating
 # a vector of triangular wrappers on each call.
-function Base.getproperty(C::Cholesky{T, BlockDiagonal{T}}, x::Symbol) where T
+function Base.getproperty(C::Cholesky{T, <:BlockDiagonal{T}}, x::Symbol) where T
     B = getfield(C, :factors)
     uplo = getfield(C, :uplo)
     f = if x === :U
@@ -277,7 +292,7 @@ function Base.getproperty(C::Cholesky{T, BlockDiagonal{T}}, x::Symbol) where T
     else
         return getfield(C, x)
     end
-    return BlockDiagonal{T}(map(f, blocks(B)))
+    return BlockDiagonal(map(f, blocks(B)))
 end
 
 end  # end module

@@ -81,7 +81,6 @@ using Test
         b1′ = b1'
         b̂1 = b1 * b1′
         @test logdet(b̂1) ≈ logdet(Matrix(b̂1))
-        @test cholesky(b̂1).U ≈ cholesky(Matrix(b̂1)).U
 
         @test similar(b1) isa BlockDiagonal
         @test size(similar(b1)) == size(b1)
@@ -150,4 +149,29 @@ using Test
         @test_throws DimensionMismatch A * b1
     end
 
+    @testset "Cholesky decomposition" begin
+        X = [  4  12 -16
+              12  37 -43
+             -16 -43  98]
+        U = [ 2.0 6.0 -8.0
+              0.0 1.0  5.0
+              0.0 0.0  3.0]
+        B = BlockDiagonal([X, X])
+        C = cholesky(B)
+        @test C isa Cholesky{Float64, <:BlockDiagonal{Float64}}
+        @test C.U ≈ cholesky(Matrix(B)).U
+        @test C.U ≈ BlockDiagonal([U, U])
+        @test C.L ≈ BlockDiagonal([U', U'])
+        @test C.UL ≈ C.U
+        @test C.uplo === 'U'
+        @test C.info == 0
+        M = BlockDiagonal(map(Matrix, blocks(C.L)))
+        C = Cholesky(M, 'L', 0)
+        @test C.U ≈ cholesky(Matrix(B)).U
+        @test C.U ≈ BlockDiagonal([U, U])
+        @test C.L ≈ BlockDiagonal([U', U'])
+        @test C.UL ≈ C.L
+        @test C.uplo === 'L'
+        @test C.info == 0
+    end
 end
