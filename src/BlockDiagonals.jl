@@ -79,41 +79,64 @@ function BlockArrays.setblock!(B::BlockDiagonal{T, V}, v::V, p::Int, q::Int) whe
     setblock!(B, v, p)
 end
 
-Base.Matrix(b::BlockDiagonal) = cat(blocks(b)...; dims=(1, 2))
-Base.size(b::BlockDiagonal) = sum(x -> size(x, 1), blocks(b)), sum(x -> size(x, 2), blocks(b))
+## Base
+Base.Matrix(B::BlockDiagonal) = cat(blocks(B)...; dims=(1, 2))
+Base.size(B::BlockDiagonal) = sum(first∘size, blocks(B)), sum(last∘size, blocks(B))
 Base.similar(B::BlockDiagonal) = BlockDiagonal(similar.(blocks(B)))
 
-function Base.getindex(b::BlockDiagonal{T}, i::Int, j::Int) where T
-    cols = size.(blocks(b), 2)
-    rows = [size(bb, 1) for bb in blocks(b)]
-    c = 0
+function Base.setindex!(B::BlockDiagonal{T}, v::T, i::Integer) where T
+    setindex!(B, v, Tuple(CartesianIndices(B)[i])...)
+end
+
+function Base.setindex!(B::BlockDiagonal{T}, v::T, i::Integer, j::Integer) where T
+    p, i_, j_ = _block_indices(B, i, j)
+    if p > 0
+        @inbounds B[Block(p)][i_, end+j_] = v
+    elseif !iszero(v)
+        throw(ArgumentError(
+            "Cannot set entry ($i, $j) in off-diagonal-block to nonzero value $v"
+        ))
+    end
+    return v
+end
+
+function Base.getindex(B::BlockDiagonal{T}, i::Integer, j::Integer) where T
+    p, i, j = _block_indices(B, i, j)
+    # if not in on-diagonal block `p` then value at `i, j` must be zero
+    return p > 0 ? B[Block(p)][i, end + j] : zero(T)
+end
+
+# Transform indices `i, j` (identifying entry `Matrix(B)[i, j]`) into indices `p, i, j`
+# such that the same entry is available via `B[Block(p)][i, end+j]`; `p = -1` if no such `p`.
+function _block_indices(B::BlockDiagonal, i::Integer, j::Integer)
+    all((0, 0) .< (i, j) .<= size(B)) || throw(BoundsError(B, (i, j)))
+    nrows = size.(blocks(B), 1)
+    ncols = size.(blocks(B), 2)
+    # find the on-diagonal block `p` in column `j`
+    p = 0
     while j > 0
-        c += 1
-        j -= cols[c]
+        p += 1
+        j -= ncols[p]
     end
-    i = i - sum(rows[1:(c - 1)])
-    (i <= 0 || i > rows[c]) && return zero(T)
-    return blocks(b)[c][i, end + j]
-end
-
-function Base.isapprox(b1::BlockDiagonal, b2::BlockDiagonal; atol::Real=0)
-    return isequal_blocksizes(b1, b2) && all(isapprox.(blocks(b1), blocks(b2); atol=atol))
-end
-
-function Base.isapprox(b::BlockDiagonal, m::AbstractMatrix; atol::Real=0)
-    return isapprox(Matrix(m), b, atol=atol)
-end
-
-function Base.isapprox(m::AbstractMatrix, b::BlockDiagonal; atol::Real=0)
-    return isapprox(m, Matrix(b), atol=atol)
-end
-
-function isequal_blocksizes(b1::BlockDiagonal, b2::BlockDiagonal)::Bool
-    size(b1) === size(b2) || return false
-    for m in eachindex(blocks(b1))
-        size(blocks(b1)[m]) === size(blocks(b2)[m]) || return false
+    i -= sum(nrows[1:(p-1)])
+    # if row `i` outside of block `p`, set `p` to place-holder value `-1`
+    if i <= 0 || i > nrows[p]
+        p = -1
     end
-    return true
+    return p, i, j
+end
+
+Base.isapprox(M::AbstractMatrix, B::BlockDiagonal; kwargs...) = isapprox(B, M; kwargs...)
+function Base.isapprox(B::BlockDiagonal, M::AbstractMatrix; kwargs...)
+    return isapprox(Matrix(B), Matrix(M); kwargs...)
+end
+
+function Base.isapprox(B1::BlockDiagonal, B2::BlockDiagonal; kwargs...)
+    return isequal_blocksizes(B1, B2) && all(isapprox.(blocks(B1), blocks(B2); kwargs...))
+end
+
+function isequal_blocksizes(B1::BlockDiagonal, B2::BlockDiagonal)::Bool
+    return size(B1) === size(B2) && blocksizes(B1) == blocksizes(B2)
 end
 
 ## Addition
