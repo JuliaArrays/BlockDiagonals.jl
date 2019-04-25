@@ -12,7 +12,7 @@ export Block, BlockSizes, blocksize, blocksizes, nblocks
 """
     BlockDiagonal{T, V<:AbstractMatrix{T}, S<:AbstractBlockSizes} <: AbstractBlockMatrix{T}
 
-A BlockMatrix with square blocks on the diagonal, and zeros off the diagonal.
+A BlockMatrix with square blocks of type `V` on the diagonal, and zeros off the diagonal.
 """
 struct BlockDiagonal{T, V<:AbstractMatrix{T}, S<:AbstractBlockSizes} <: AbstractBlockMatrix{T}
     blocks::Vector{V}
@@ -33,6 +33,12 @@ end
 BlockDiagonal(B::BlockDiagonal) = copy(B)
 
 is_square(A::AbstractMatrix) = size(A, 1) === size(A, 2)
+
+"""
+    blocks(B::BlockDiagonal{T, V}) -> Vector{V}
+
+Return the on-diagonal blocks of B.
+"""
 blocks(B::BlockDiagonal) = B.blocks
 
 ## AbstractBlockMatrix interface
@@ -40,8 +46,8 @@ BlockArrays.blocksizes(B::BlockDiagonal) = B.blocksizes
 
 # Needs to be `Int` not `Integer` to avoid methods ambiguity. Can be changed after
 # BlockArrays v0.9 is released; see https://github.com/JuliaArrays/BlockArrays.jl/issues/82
-BlockArrays.blocksize(B::BlockDiagonal, p::Int) = size(blocks(B)[p])
-function BlockArrays.blocksize(B::BlockDiagonal, p::Int, q::Int)
+BlockArrays.blocksize(B::BlockDiagonal, p::Int)::Tuple = size(blocks(B)[p])
+function BlockArrays.blocksize(B::BlockDiagonal, p::Int, q::Int)::Tuple
     return size(blocks(B)[p], 1), size(blocks(B)[q], 2)
 end
 
@@ -121,7 +127,7 @@ function _block_indices(B::BlockDiagonal, i::Integer, j::Integer)
 end
 
 Base.isapprox(M::AbstractMatrix, B::BlockDiagonal; kwargs...) = isapprox(B, M; kwargs...)
-function Base.isapprox(B::BlockDiagonal, M::AbstractMatrix; kwargs...)
+function Base.isapprox(B::BlockDiagonal, M::AbstractMatrix; kwargs...)::Bool
     return isapprox(Matrix(B), Matrix(M); kwargs...)
 end
 
@@ -134,103 +140,91 @@ function isequal_blocksizes(B1::BlockDiagonal, B2::BlockDiagonal)::Bool
 end
 
 ## Addition
-function Base.:+(b1::BlockDiagonal, b2::BlockDiagonal)
-    if size(b1) == size(b2) && size.(blocks(b1)) == size.(blocks(b2))
-        return BlockDiagonal(blocks(b1) .+ blocks(b2))
+# TODO make type stable, maybe via Broadcasting?
+function Base.:+(B1::BlockDiagonal, B2::BlockDiagonal)
+    if size(B1) == size(B2) && size.(blocks(B1)) == size.(blocks(B2))
+        return BlockDiagonal(blocks(B1) .+ blocks(B2))
     else
-        return Matrix(b1) + Matrix(b2)
+        return Matrix(B1) + Matrix(B2)
     end
 end
 
-Base.:+(m::AbstractMatrix, b::BlockDiagonal) = b + m
-function Base.:+(b::BlockDiagonal, m::AbstractMatrix)
-    !isdiag(m) && return Matrix(b) + m
-    size(b) != size(m) && throw(DimensionMismatch("Can't add matrices of different sizes."))
-    d = diag(m)
-    si = 1
-    sj = 1
-    nb = copy(blocks(b))
-    for i in 1:length(nb)
-        s = size(nb[i])
-        nb[i] += @view m[si:s[1] + si - 1, sj:s[2] + sj - 1]
-        si += s[1]
-        sj += s[2]
-    end
-    return BlockDiagonal(nb)
-end
+Base.:+(M::AbstractMatrix, B::BlockDiagonal) = B + M
+Base.:+(B::BlockDiagonal, M::AbstractMatrix) = Matrix(B) + M
 
-# function +(A::BlockDiagonal, B::StridedMatrix)::Matrix
-#     size(A) != size(B) && throw(DimensionMismatch("dimensions must match"))
-#     C = copy(B)
-#     row = 1
-#     for (j, block) in enumerate(blocks(A))
-#         rows = row:row + size(block, 1) - 1
-#         C[rows, rows] .+= block
-#         row += size(block, 1)
-#     end
-#     return C
-# end
-
-Base.:+(m::Diagonal, b::BlockDiagonal) = b + m
-function Base.:+(b::BlockDiagonal, m::Diagonal)
-    size(b) != size(m) && throw(DimensionMismatch("Can't add matrices of different sizes."))
-    C = similar(b)
+function Base.:+(B::BlockDiagonal, M::StridedMatrix)::Matrix
+    size(B) === size(M) || throw(DimensionMismatch("dimensions must match"))
+    A = copy(M)
     row = 1
-    for (j, block) in enumerate(blocks(b))
-        rows = row:row + size(block, 1) - 1
-        block_C = blocks(C)[j]
-        block_C .= block
-        for (k, r) in enumerate(rows)
-            block_C[k, k] += diag(m)[r]
-        end
-        row += size(block, 1)
+    for (j, block) in enumerate(blocks(B))
+        nrows = size(block, 1)
+        rows = row:(row + nrows-1)
+        A[rows, rows] .+= block
+        row += nrows
     end
-    return C
+    return A
 end
 
-Base.:+(m::UniformScaling, b::BlockDiagonal) = b + m
-function Base.:+(b::BlockDiagonal, m::UniformScaling)
-    return BlockDiagonal([block + m for block in blocks(b)])
+Base.:+(M::Diagonal, B::BlockDiagonal) = B + M
+function Base.:+(B::BlockDiagonal, M::Diagonal)::BlockDiagonal
+    size(B) === size(M) || throw(DimensionMismatch("dimensions must match"))
+    A = copy(B)
+    d = diag(M)
+    row = 1
+    for (p, block) in enumerate(blocks(B))
+        nrows = size(block, 1)
+        rows = row:(row + nrows-1)
+        for (i, r) in enumerate(rows)
+            A[Block(p)][i, i] += d[r]
+        end
+        row += nrows
+    end
+    return A
 end
 
+Base.:+(M::UniformScaling, B::BlockDiagonal) = B + M
+function Base.:+(B::BlockDiagonal, M::UniformScaling)
+    return BlockDiagonal([block + M for block in blocks(B)])
+end
 
 ## Multiplication
-Base.:*(b::BlockDiagonal, n::Real) = BlockDiagonal(n .* blocks(b))
-Base.:*(n::Real, b::BlockDiagonal) = b * n
+Base.:*(n::Real, B::BlockDiagonal) = B * n
+Base.:*(B::BlockDiagonal, n::Real) = BlockDiagonal(n .* blocks(B))
 
-function Base.:*(b::BlockDiagonal, m::BlockDiagonal)
-    if size(b) == size(m) && size.(blocks(b)) == size.(blocks(m))
-        return BlockDiagonal(blocks(b) .* blocks(m))
+# TODO make type stable, maybe via Broadcasting?
+function Base.:*(B1::BlockDiagonal, B2::BlockDiagonal)
+    if size(B1) == size(B2) && size.(blocks(B1)) == size.(blocks(B2))
+        return BlockDiagonal(blocks(B1) .* blocks(B2))
     else
-        return Matrix(b) * Matrix(m)
+        return Matrix(B1) * Matrix(B2)
     end
 end
 
-function Base.:*(b::BlockDiagonal, m::AbstractMatrix)
-    if size(b, 2) !== size(m, 1)
-        throw(DimensionMismatch("Cannot multiply matrices of size $(size(b)) and $(size(m))."))
+function Base.:*(B::BlockDiagonal, M::AbstractMatrix)::Matrix
+    if size(B, 2) !== size(M, 1)
+        throw(DimensionMismatch("A has dimensions $(size(B)) but B has dimensions $(size(M))"))
     end
-    st = 1
-    ed = 1
+    st = 1  # start
+    ed = 0  # end
     d = []
-    for block in blocks(b)
-        ed = st + size(block, 2) - 1
-        push!(d, block * m[st:ed, :])
+    for block in blocks(B)
+        ed += size(block, 2)
+        push!(d, block * M[st:ed, :])
         st = ed + 1
     end
     return reduce(vcat, d)
 end
 
-function Base.:*(m::AbstractMatrix, b::BlockDiagonal)
-    if size(b, 1) != size(m, 2)
-        throw(DimensionMismatch("Cannot multiply matrices of size $(size(b)) and $(size(m))."))
+function Base.:*(M::AbstractMatrix, B::BlockDiagonal)
+    if size(M, 2) !== size(B, 1)
+        throw(DimensionMismatch("A has dimensions $(size(M)) but B has dimensions $(size(B))"))
     end
-    st = 1
-    ed = 1
+    st = 1  # start
+    ed = 0  # end
     d = []
-    for block in blocks(b)
-        ed = st + size(block, 1) - 1
-        push!(d, m[:, st:ed] * block)
+    for block in blocks(B)
+        ed += size(block, 1)
+        push!(d, M[:, st:ed] * block)
         st = ed + 1
     end
     return reduce(hcat, d)::Matrix
@@ -274,7 +268,7 @@ function Base.:*(M::Diagonal, B::BlockDiagonal)::BlockDiagonal
 end
 
 ## Division
-Base.:/(b::BlockDiagonal, n::Real) = BlockDiagonal(blocks(b) ./ n)
+Base.:/(B::BlockDiagonal, n::Real) = BlockDiagonal(blocks(B) ./ n)
 
 ## LinearAlgebra
 for f in (:adjoint, :eigvecs, :inv, :transpose)
@@ -312,7 +306,7 @@ function LinearAlgebra.svd(B::BlockDiagonal; full::Bool=false)::SVD
     return SVD(U[:, p], S[p], Vt[p, :])
 end
 
-function LinearAlgebra.cholesky(B::BlockDiagonal)
+function LinearAlgebra.cholesky(B::BlockDiagonal)::Cholesky
     C = BlockDiagonal(map(b -> cholesky(b).U, blocks(B)))
     return Cholesky(C, 'U', 0)
 end
