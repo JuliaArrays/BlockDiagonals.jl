@@ -216,20 +216,20 @@ function Base.:*(B::BlockDiagonal, M::AbstractMatrix)
     _check_matmul_dims(B, M)
     st = 1  # start
     ed = 0  # end
-    d = []
+    d = Matrix[]
     for block in blocks(B)
         ed += size(block, 2)
         push!(d, block * M[st:ed, :])
         st = ed + 1
     end
-    return reduce(vcat, d)
+    return reduce(vcat, d)::Matrix
 end
 
 function Base.:*(M::AbstractMatrix, B::BlockDiagonal)
     _check_matmul_dims(M, B)
     st = 1  # start
     ed = 0  # end
-    d = []
+    d = Matrix[]
     for block in blocks(B)
         ed += size(block, 1)
         push!(d, M[:, st:ed] * block)
