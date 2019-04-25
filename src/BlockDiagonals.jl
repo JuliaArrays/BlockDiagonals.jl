@@ -193,8 +193,8 @@ function Base.:+(B::BlockDiagonal, M::UniformScaling)
 end
 
 ## Multiplication
-Base.:*(n::Real, B::BlockDiagonal) = B * n
-Base.:*(B::BlockDiagonal, n::Real) = BlockDiagonal(n .* blocks(B))
+Base.:*(n::Number, B::BlockDiagonal) = B * n
+Base.:*(B::BlockDiagonal, n::Number) = BlockDiagonal(n .* blocks(B))
 
 # TODO make type stable, maybe via Broadcasting?
 function Base.:*(B1::BlockDiagonal, B2::BlockDiagonal)
@@ -272,7 +272,7 @@ function Base.:*(M::Diagonal, B::BlockDiagonal)::BlockDiagonal
 end
 
 ## Division
-Base.:/(B::BlockDiagonal, n::Real) = BlockDiagonal(blocks(B) ./ n)
+Base.:/(B::BlockDiagonal, n::Number) = BlockDiagonal(blocks(B) ./ n)
 
 ## LinearAlgebra
 for f in (:adjoint, :eigvecs, :inv, :transpose)
