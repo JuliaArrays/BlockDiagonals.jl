@@ -275,7 +275,7 @@ end
 Base.:/(B::BlockDiagonal, n::Number) = BlockDiagonal(blocks(B) ./ n)
 
 ## LinearAlgebra
-for f in (:adjoint, :eigvecs, :inv, :transpose)
+for f in (:adjoint, :eigvecs, :inv, :pinv, :transpose)
     @eval LinearAlgebra.$f(B::BlockDiagonal) = BlockDiagonal(map($f, blocks(B)))
 end
 

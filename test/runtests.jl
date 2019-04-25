@@ -72,7 +72,7 @@ using Test
 
     @testset "Unary Linear Algebra" begin
 
-        @testset "$f" for f in (adjoint, det, diag, eigvals, svdvals, transpose, tr)
+        @testset "$f" for f in (adjoint, det, diag, eigvals, inv, pinv, svdvals, transpose, tr)
             @test f(b1) ≈ f(Matrix(b1))
         end
 
