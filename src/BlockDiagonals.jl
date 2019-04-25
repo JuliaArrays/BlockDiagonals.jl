@@ -37,7 +37,7 @@ end
 
 BlockDiagonal(B::BlockDiagonal) = copy(B)
 
-is_square(A::AbstractMatrix) = size(A, 1) === size(A, 2)
+is_square(A::AbstractMatrix) = size(A, 1) == size(A, 2)
 
 """
     blocks(B::BlockDiagonal{T, V}) -> Vector{V}
@@ -141,7 +141,7 @@ function Base.isapprox(B1::BlockDiagonal, B2::BlockDiagonal; kwargs...)
 end
 
 function isequal_blocksizes(B1::BlockDiagonal, B2::BlockDiagonal)::Bool
-    return size(B1) === size(B2) && blocksizes(B1) == blocksizes(B2)
+    return size(B1) == size(B2) && blocksizes(B1) == blocksizes(B2)
 end
 
 ## Addition
@@ -158,7 +158,7 @@ Base.:+(M::AbstractMatrix, B::BlockDiagonal) = B + M
 Base.:+(B::BlockDiagonal, M::AbstractMatrix) = Matrix(B) + M
 
 function Base.:+(B::BlockDiagonal, M::StridedMatrix)::Matrix
-    size(B) === size(M) || throw(DimensionMismatch("dimensions must match"))
+    size(B) == size(M) || throw(DimensionMismatch("dimensions must match"))
     A = copy(M)
     row = 1
     for (j, block) in enumerate(blocks(B))
@@ -172,7 +172,7 @@ end
 
 Base.:+(M::Diagonal, B::BlockDiagonal) = B + M
 function Base.:+(B::BlockDiagonal, M::Diagonal)::BlockDiagonal
-    size(B) === size(M) || throw(DimensionMismatch("dimensions must match"))
+    size(B) == size(M) || throw(DimensionMismatch("dimensions must match"))
     A = copy(B)
     d = diag(M)
     row = 1
@@ -324,11 +324,11 @@ function Base.getproperty(C::Cholesky{T, <:BlockDiagonal{T}}, x::Symbol) where T
     B = getfield(C, :factors)
     uplo = getfield(C, :uplo)
     f = if x === :U
-        uplo === 'U' ? UpperTriangular : (X -> UpperTriangular(X'))
+        uplo == 'U' ? UpperTriangular : (X -> UpperTriangular(X'))
     elseif x === :L
-        uplo === 'L' ? LowerTriangular : (X -> LowerTriangular(X'))
+        uplo == 'L' ? LowerTriangular : (X -> LowerTriangular(X'))
     elseif x === :UL
-        uplo === 'U' ? UpperTriangular : LowerTriangular
+        uplo == 'U' ? UpperTriangular : LowerTriangular
     else
         return getfield(C, x)
     end
