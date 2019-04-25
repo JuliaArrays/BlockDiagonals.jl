@@ -252,23 +252,27 @@ LinearAlgebra.tr(B::BlockDiagonal) = sum(tr, blocks(B))
 function LinearAlgebra.eigvals(B::BlockDiagonal)
     eigs = mapreduce(eigvals, vcat, blocks(B))
     eigs isa Vector{<:Complex} && return eigs
-    return sort(eigs)
+    return sort!(eigs)
 end
 
-"""
-    svd(B::BlockDiagonal{T}; full::Bool = false) -> SVD{T, T, BlockDiagonal{T}}
+svdvals_blockwise(B::BlockDiagonal) = mapreduce(svdvals, vcat, blocks(B))
+LinearAlgebra.svdvals(B::BlockDiagonal) = sort!(svdvals_blockwise(B); rev=true)
 
-Compute the SVD `F` of `B` such that `B = F.U * Diagonal(F.S) * F.Vt`, where
-`U`, `V`, and `Vt` are `BlockDiagonal`.
-
-Note that the singular values in `S` are not sorted.
-"""
-function LinearAlgebra.svd(B::BlockDiagonal; full::Bool=false)
+# `B = U * Diagonal(S) * Vt` with `U` and `Vt` `BlockDiagonal` (`S` only sorted block-wise).
+function svd_blockwise(B::BlockDiagonal; full::Bool=false)
     Fs = svd.(blocks(B); full=full)
     U = BlockDiagonal([F.U for F in Fs])
     S = mapreduce(F -> F.S, vcat, Fs)
     Vt = BlockDiagonal([F.Vt for F in Fs])
-    return SVD(U, S, Vt)
+    return U, S, Vt
+end
+
+function LinearAlgebra.svd(B::BlockDiagonal; full::Bool=false)::SVD
+    U, S, Vt = svd_blockwise(B, full=full)
+    # Sort singular values in descending order by convention.
+    # This means `U` and `Vt` will be `Matrix`s, not `BlockDiagonal`s.
+    p = sortperm(S, rev=true)
+    return SVD(U[:, p], S[p], Vt[p, :])
 end
 
 function LinearAlgebra.cholesky(B::BlockDiagonal)

@@ -1,5 +1,5 @@
 using BlockDiagonals
-using BlockDiagonals: blocks, isequal_blocksizes
+using BlockDiagonals: blocks, isequal_blocksizes, svd_blockwise
 using LinearAlgebra
 using Random
 using Test
@@ -180,21 +180,45 @@ using Test
               12  37 -43
              -16 -43  98]
         B = BlockDiagonal([X, X])
+
         @testset "full=$full" for full in (true, false)
-            F = svd(B; full=full)
-            @test F isa SVD{Float64, Float64, <:BlockDiagonal{Float64}}
-            # Matrices should be BlockDiagonal
-            @test F.U isa BlockDiagonal
-            @test F.V isa BlockDiagonal
-            @test F.Vt isa BlockDiagonal
-            # Should have same values, but not sorted so as to keep BlockDiagonal structure
-            F_ = svd(Matrix(B), full=full)
-            for fname in fieldnames(SVD)
-                @test sort(vec(getfield(F, fname))) ≈ sort(vec(getfield(F_, fname)))
+
+            @testset "svd_blockwise" begin
+                U, S, Vt = svd_blockwise(B; full=full)
+                F = SVD(U, S, Vt)
+                @test B ≈ F.U * Diagonal(F.S) * F.Vt
+
+                # Matrices should be BlockDiagonal
+                @test F isa SVD{Float64, Float64, <:BlockDiagonal{Float64}}
+                @test F.U isa BlockDiagonal
+                @test F.V isa BlockDiagonal
+                @test F.Vt isa BlockDiagonal
+
+                # Should have same values, but not sorted so as to keep BlockDiagonal structure
+                F_ = svd(Matrix(B), full=full)
+                for fname in fieldnames(SVD)
+                    @test sort(vec(getfield(F, fname))) ≈ sort(vec(getfield(F_, fname)))
+                end
+                # Singular values should be block-wise
+                s = svd(X).S
+                @test F.S == vcat(s, s)
             end
-            # Singular values should be block-wise
-            s = svd(X).S
-            @test F.S ≈ vcat(s, s)
+
+            @testset "svd" begin
+                F = svd(B; full=full)
+                F_ = svd(Matrix(B), full=full)
+
+                @test F isa SVD
+                @test B ≈ F.U * Diagonal(F.S) * F.Vt
+
+                @test F == F_
+                for fname in fieldnames(SVD)
+                    @test getfield(F, fname) ≈ getfield(F_, fname)
+                end
+
+                # Singular values should be sorted in descending order
+                @test F.S == sort(F.S, rev=true)
+            end
         end
     end
-end
+end  # tests
