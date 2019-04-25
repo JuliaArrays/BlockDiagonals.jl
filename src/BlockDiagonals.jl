@@ -78,14 +78,14 @@ function BlockArrays.setblock!(B::BlockDiagonal{T, V}, v::V, p::Integer) where {
             "Cannot set block of size $(blocksize(B, p)) to block of size $(size(v))."
         ))
     end
-    blocks(B)[p] = v
+    return blocks(B)[p] = v
 end
 
 # Needs to be `Int` not `Integer` to avoid methods ambiguity. Can be changed after
 # BlockArrays v0.9 is released; see https://github.com/JuliaArrays/BlockArrays.jl/issues/82
 function BlockArrays.setblock!(B::BlockDiagonal{T, V}, v::V, p::Int, q::Int) where {T, V}
     p == q || throw(ArgumentError("Cannot set off-diagonal block ($p, $q) to non-zero value."))
-    setblock!(B, v, p)
+    return setblock!(B, v, p)
 end
 
 ## Base
@@ -147,7 +147,7 @@ end
 ## Addition
 # TODO make type stable, maybe via Broadcasting?
 function Base.:+(B1::BlockDiagonal, B2::BlockDiagonal)
-    if size(B1) == size(B2) && size.(blocks(B1)) == size.(blocks(B2))
+    if isequal_blocksizes(B1, B2)
         return BlockDiagonal(blocks(B1) .+ blocks(B2))
     else
         return Matrix(B1) + Matrix(B2)
@@ -198,7 +198,7 @@ Base.:*(B::BlockDiagonal, n::Real) = BlockDiagonal(n .* blocks(B))
 
 # TODO make type stable, maybe via Broadcasting?
 function Base.:*(B1::BlockDiagonal, B2::BlockDiagonal)
-    if size(B1) == size(B2) && size.(blocks(B1)) == size.(blocks(B2))
+    if isequal_blocksizes(B1, B2)
         return BlockDiagonal(blocks(B1) .* blocks(B2))
     else
         return Matrix(B1) * Matrix(B2)
