@@ -132,21 +132,19 @@ using Test
         @test Matrix(b1 * b1) ≈ Matrix(b1) * Matrix(b1)
         @test_throws DimensionMismatch b3 * b1
 
-        # BlockDiagonal * Vector.
-        @test b1 * a isa Vector
-        @test b1 * a ≈ Matrix(b1) * a
-        @test_throws DimensionMismatch b1 * b
+        @testset "BlockDiagonal * Diagonal" begin
+            D = Diagonal(randn(rng, N))
+            D′ = Diagonal(randn(rng, N + N1))
 
-        # BlockDiagonal * Matrix.
-        C = randn(size(b1, 1), size(A, 2))
-        @test b1 * A isa Matrix
-        @test b1 * A ≈ Matrix(b1) * A
-        @test_throws DimensionMismatch b1 * B
+            @test b1 * D isa BlockDiagonal
+            @test b1 * D ≈ Matrix(b1) * D
+            @test_throws DimensionMismatch D′ * b1
 
-        # Matrix * BlockDiagonal.
-        @test A′ * b1 isa Matrix
-        @test A′ * b1 ≈ A′ * Matrix(b1)
-        @test_throws DimensionMismatch A * b1
+            # Diagonal * BlockDiagonal
+            @test D * b1 isa BlockDiagonal
+            @test D * b1 ≈ D * Matrix(b1)
+            @test_throws DimensionMismatch D′ * b1
+        end
     end
 
     @testset "Cholesky decomposition" begin

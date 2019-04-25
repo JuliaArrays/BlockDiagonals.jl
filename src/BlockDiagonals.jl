@@ -233,7 +233,44 @@ function Base.:*(m::AbstractMatrix, b::BlockDiagonal)
         push!(d, m[:, st:ed] * block)
         st = ed + 1
     end
-    return reduce(hcat, d)
+    return reduce(hcat, d)::Matrix
+end
+
+# Diagonal
+function Base.:*(B::BlockDiagonal, M::Diagonal)::BlockDiagonal
+    if size(B, 2) !== size(M, 1)
+        throw(DimensionMismatch("A has dimensions $(size(B)) but B has dimensions $(size(M))"))
+    end
+    A = copy(B)
+    d = diag(M)
+    col = 1
+    for (p, block) in enumerate(blocks(B))
+        ncols = size(block, 2)
+        cols = col:(col + ncols-1)
+        for (j, c) in enumerate(cols)
+            A[Block(p)][:, j] *= d[c]
+        end
+        col += ncols
+    end
+    return A
+end
+
+function Base.:*(M::Diagonal, B::BlockDiagonal)::BlockDiagonal
+    if size(M, 2) !== size(B, 1)
+        throw(DimensionMismatch("A has dimensions $(size(M)) but B has dimensions $(size(B))"))
+    end
+    A = copy(B)
+    d = diag(M)
+    row = 1
+    for (p, block) in enumerate(blocks(B))
+        nrows = size(block, 1)
+        rows = row:(row + nrows-1)
+        for (i, r) in enumerate(rows)
+            A[Block(p)][i, :] *= d[r]
+        end
+        row += nrows
+    end
+    return A
 end
 
 ## Division
