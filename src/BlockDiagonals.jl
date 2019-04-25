@@ -205,10 +205,15 @@ function Base.:*(B1::BlockDiagonal, B2::BlockDiagonal)
     end
 end
 
-function Base.:*(B::BlockDiagonal, M::AbstractMatrix)::Matrix
-    if size(B, 2) !== size(M, 1)
-        throw(DimensionMismatch("A has dimensions $(size(B)) but B has dimensions $(size(M))"))
-    end
+function _check_matmul_dims(A::AbstractMatrix, B::AbstractMatrix)
+    # match error message from LinearAlgebra
+    size(A, 2) == size(B, 1) || throw(DimensionMismatch(
+        "A has dimensions $(size(A)) but B has dimensions $(size(B))"
+    ))
+end
+
+function Base.:*(B::BlockDiagonal, M::AbstractMatrix)
+    _check_matmul_dims(B, M)
     st = 1  # start
     ed = 0  # end
     d = []
@@ -221,9 +226,7 @@ function Base.:*(B::BlockDiagonal, M::AbstractMatrix)::Matrix
 end
 
 function Base.:*(M::AbstractMatrix, B::BlockDiagonal)
-    if size(M, 2) !== size(B, 1)
-        throw(DimensionMismatch("A has dimensions $(size(M)) but B has dimensions $(size(B))"))
-    end
+    _check_matmul_dims(M, B)
     st = 1  # start
     ed = 0  # end
     d = []
@@ -237,9 +240,7 @@ end
 
 # Diagonal
 function Base.:*(B::BlockDiagonal, M::Diagonal)::BlockDiagonal
-    if size(B, 2) !== size(M, 1)
-        throw(DimensionMismatch("A has dimensions $(size(B)) but B has dimensions $(size(M))"))
-    end
+    _check_matmul_dims(B, M)
     A = copy(B)
     d = diag(M)
     col = 1
@@ -255,9 +256,7 @@ function Base.:*(B::BlockDiagonal, M::Diagonal)::BlockDiagonal
 end
 
 function Base.:*(M::Diagonal, B::BlockDiagonal)::BlockDiagonal
-    if size(M, 2) !== size(B, 1)
-        throw(DimensionMismatch("A has dimensions $(size(M)) but B has dimensions $(size(B))"))
-    end
+    _check_matmul_dims(M, B)
     A = copy(B)
     d = diag(M)
     row = 1
