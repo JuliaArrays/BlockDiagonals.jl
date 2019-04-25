@@ -58,9 +58,7 @@ end
 
 # Allow `B[Block(i)]` as shorthand for i^th diagonal block, i.e. `B[Block(i, i)]`
 BlockArrays.getblock(B::BlockDiagonal, p::Integer) = blocks(B)[p]
-
 Base.getindex(B::BlockDiagonal, block::Block{1}) = getblock(B, block.n[1])
-
 Base.setindex!(B::BlockDiagonal, v, block::Block{1}) = setblock!(B, v, block.n[1])
 
 function BlockArrays.setblock!(B::BlockDiagonal{T, V}, v::V, p::Integer) where {T, V}
@@ -82,19 +80,15 @@ end
 ## Base
 Base.Matrix(B::BlockDiagonal) = cat(blocks(B)...; dims=(1, 2))
 Base.size(B::BlockDiagonal) = sum(first∘size, blocks(B)), sum(last∘size, blocks(B))
-Base.similar(B::BlockDiagonal) = BlockDiagonal(similar.(blocks(B)))
+Base.similar(B::BlockDiagonal) = BlockDiagonal(map(similar, blocks(B)))
 
-function Base.setindex!(B::BlockDiagonal{T}, v::T, i::Integer) where T
-    setindex!(B, v, Tuple(CartesianIndices(B)[i])...)
-end
-
-function Base.setindex!(B::BlockDiagonal{T}, v::T, i::Integer, j::Integer) where T
+function Base.setindex!(B::BlockDiagonal{T}, v, i::Integer, j::Integer) where T
     p, i_, j_ = _block_indices(B, i, j)
     if p > 0
         @inbounds B[Block(p)][i_, end+j_] = v
     elseif !iszero(v)
         throw(ArgumentError(
-            "Cannot set entry ($i, $j) in off-diagonal-block to nonzero value $v"
+            "Cannot set entry ($i, $j) in off-diagonal-block to nonzero value $v."
         ))
     end
     return v

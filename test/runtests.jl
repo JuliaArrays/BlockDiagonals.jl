@@ -29,6 +29,22 @@ using Test
             end
         end
         @test all(eqs)
+
+        @testset "similar" begin
+            @test similar(b1) isa BlockDiagonal
+            @test size(similar(b1)) == size(b1)
+            @test size.(blocks(similar(b1))) == size.(blocks(b1))
+        end
+
+        @testset "setindex!" begin
+            X = BlockDiagonal([rand(Float32, 5, 5), rand(Float32, 3, 3)])
+            X[10] = Int(10)
+            @test X[10] === Float32(10.0)
+            X[3, 3] = Int(9)
+            @test X[3, 3] === Float32(9.0)
+            # Should not allow setting value outside on-diagonal blocks to non-zero
+            @test_throws ArgumentError X[1, 7] = 1
+        end
     end
 
     @testset "isequal_blocksizes" begin
