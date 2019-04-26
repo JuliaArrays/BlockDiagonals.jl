@@ -8,3 +8,7 @@
 Functionality for working efficiently with [block diagonal matrices].
 
 [block diagonal matrices]: https://en.wikipedia.org/wiki/Block_matrix#Block_diagonal_matrices
+
+```@autodocs
+Modules = [BlockDiagonals]
+```
