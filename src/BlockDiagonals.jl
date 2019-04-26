@@ -214,26 +214,22 @@ end
 
 function Base.:*(B::BlockDiagonal, M::AbstractMatrix)
     _check_matmul_dims(B, M)
-    st = 1  # start
-    ed = 0  # end
-    d = Matrix[]
-    for block in blocks(B)
-        ed += size(block, 2)
-        push!(d, block * M[st:ed, :])
-        st = ed + 1
+    ed = 0
+    d = map(blocks(B)) do block
+        st = ed + 1  # start
+        ed += size(block, 2)  # end
+        return block * M[st:ed, :]
     end
     return reduce(vcat, d)::Matrix
 end
 
 function Base.:*(M::AbstractMatrix, B::BlockDiagonal)
     _check_matmul_dims(M, B)
-    st = 1  # start
-    ed = 0  # end
-    d = Matrix[]
-    for block in blocks(B)
-        ed += size(block, 1)
-        push!(d, M[:, st:ed] * block)
-        st = ed + 1
+    ed = 0
+    d = map(blocks(B)) do block
+        st = ed + 1  # start
+        ed += size(block, 1)  # end
+        return M[:, st:ed] * block
     end
     return reduce(hcat, d)::Matrix
 end
