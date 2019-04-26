@@ -51,8 +51,8 @@ BlockArrays.blocksizes(B::BlockDiagonal) = B.blocksizes
 
 # Needs to be `Int` not `Integer` to avoid methods ambiguity. Can be changed after
 # BlockArrays v0.9 is released; see https://github.com/JuliaArrays/BlockArrays.jl/issues/82
-BlockArrays.blocksize(B::BlockDiagonal, p::Int)::Tuple = size(blocks(B)[p])
-function BlockArrays.blocksize(B::BlockDiagonal, p::Int, q::Int)::Tuple
+BlockArrays.blocksize(B::BlockDiagonal, p::Int) = size(blocks(B)[p])
+function BlockArrays.blocksize(B::BlockDiagonal, p::Int, q::Int)
     return size(blocks(B)[p], 1), size(blocks(B)[q], 2)
 end
 
@@ -157,7 +157,7 @@ end
 Base.:+(M::AbstractMatrix, B::BlockDiagonal) = B + M
 Base.:+(B::BlockDiagonal, M::AbstractMatrix) = Matrix(B) + M
 
-function Base.:+(B::BlockDiagonal, M::StridedMatrix)::Matrix
+function Base.:+(B::BlockDiagonal, M::StridedMatrix)
     size(B) == size(M) || throw(DimensionMismatch("dimensions must match"))
     A = copy(M)
     row = 1
