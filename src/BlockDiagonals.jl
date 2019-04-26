@@ -281,12 +281,20 @@ LinearAlgebra.logdet(B::BlockDiagonal) = sum(logdet, blocks(B))
 LinearAlgebra.tr(B::BlockDiagonal) = sum(tr, blocks(B))
 
 # Real matrices can have Complex eigenvalues; `eigvals` is not type stable.
-function LinearAlgebra.eigvals(B::BlockDiagonal)
-    eigs = mapreduce(eigvals, vcat, blocks(B))
-    # Currently no convention for sorting Complex eigenvalues.
+function LinearAlgebra.eigvals(B::BlockDiagonal; kwargs...)
+    # Currently no convention for sorting eigenvalues.
     # This may change in later a Julia version https://github.com/JuliaLang/julia/pull/21598
-    eigs isa Vector{<:Complex} && return eigs
-    return sort!(eigs)
+    return mapreduce(b -> eigvals(b; kwargs...), vcat, blocks(B))
+end
+
+# This is copy of the definition for LinearAlgebra.
+# Should not be needed once we fix https://github.com/JuliaLang/julia/issues/31843
+function LinearAlgebra.eigmax(B::BlockDiagonal; kwargs...)
+    v = eigvals(B; kwargs...)
+    if eltype(v) <: Complex
+        throw(DomainError(A, "`A` cannot have complex eigenvalues."))
+    end
+    return maximum(v)
 end
 
 svdvals_blockwise(B::BlockDiagonal) = mapreduce(svdvals, vcat, blocks(B))

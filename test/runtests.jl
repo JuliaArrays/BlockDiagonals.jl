@@ -76,6 +76,13 @@ using Test
             @test f(b1) ≈ f(Matrix(b1))
         end
 
+        @testset "$g" for g in (eigvals, eigmin, eigmax)
+            for p in (true, false), s in (true, false)
+                # `b2` has real eigenvals, required for `eigmin`, `b1` has Complex eigenvals
+                @test g(b2; permute=p, scale=s) ≈ g(Matrix(b2), permute=p, scale=s)
+            end
+        end
+
         # Requires a postive semi-definite matrix
         @testset "logdet" begin
             b̂1 = b1 * b1'
