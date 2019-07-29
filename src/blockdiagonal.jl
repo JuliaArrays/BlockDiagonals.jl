@@ -36,10 +36,10 @@ blocks(B::BlockDiagonal) = B.blocks
 Return the size of each on-diagonal block in order.
 
 # Example
-```jldoctest
-julia> B = BlockDiagonal(rand(2, 2), rand(3, 3));
+```jldoctest; setup = :(using BlockDiagonals)
+julia> B = BlockDiagonal([rand(2, 2), rand(3, 3)]);
 
-julia> blocksizes(A)
+julia> blocksizes(B)
 2-element Array{Tuple{Int64,Int64},1}:
  (2, 2)
  (3, 3)
@@ -55,7 +55,7 @@ Return the size of the p^th on-diagonal block. Optionally specify `q` to return 
 size of block `p, q`.
 
 # Example
-```jldoctest
+```jldoctest; setup = :(using BlockDiagonals)
 julia> X = rand(2, 2); Y = rand(3, 3);
 
 julia> B = BlockDiagonal([X, Y]);
