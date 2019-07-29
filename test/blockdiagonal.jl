@@ -30,6 +30,15 @@ using Test
         end
         @test all(eqs)
 
+        @testset "BlockDiagonal does not copy" begin
+            Bxy = BlockDiagonal([X, Y])
+            X[1] = 1.1
+            @test Bxy[1] == 1.1
+            Bxy2 = BlockDiagonal(Bxy)
+            Bxy[2] = 2.2
+            @test X[2] == Bxy[2] == Bxy2[2] == 2.2
+        end
+
         @testset "parent" begin
             @test parent(b1) isa Vector{<:AbstractMatrix}
             @test parent(BlockDiagonal([X, Y])) == [X, Y]

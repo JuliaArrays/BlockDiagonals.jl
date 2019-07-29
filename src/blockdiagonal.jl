@@ -26,7 +26,7 @@ function BlockDiagonal(blocks::AbstractVector{<:AbstractMatrix})
     return BlockDiagonal(blocks, sizes)
 end
 
-BlockDiagonal(B::BlockDiagonal) = copy(B)
+BlockDiagonal(B::BlockDiagonal) = B
 
 is_square(A::AbstractMatrix) = size(A, 1) == size(A, 2)
 
