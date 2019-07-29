@@ -10,7 +10,7 @@ LinearAlgebra.logdet(B::BlockDiagonal) = sum(logdet, blocks(B))
 LinearAlgebra.tr(B::BlockDiagonal) = sum(tr, blocks(B))
 
 # Real matrices can have Complex eigenvalues; `eigvals` is not type stable.
-if VERSION < v"1.2.0-"
+if VERSION < v"1.2.0-DEV.275"
     # No convention for sorting eigenvalues in earlier versions of Julia.
     function LinearAlgebra.eigvals(B::BlockDiagonal; kwargs...)
         return mapreduce(b -> eigvals(b; kwargs...), vcat, blocks(B))
@@ -25,7 +25,7 @@ else
     end
 end
 
-if VERSION < v"1.3.0-"
+if VERSION < v"1.3.0-DEV.426"
     # This is copy of the definition for LinearAlgebra, only used to workaround
     # https://github.com/JuliaLang/julia/issues/31843 which was fixed in Julia v1.3
     function LinearAlgebra.eigmax(B::BlockDiagonal; kwargs...)
