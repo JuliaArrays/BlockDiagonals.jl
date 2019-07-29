@@ -32,6 +32,15 @@ using Test
             @test Matrix(b1) + b1 isa Matrix
             @test Matrix(b1) + b1 == b1 + b1
             @test_throws DimensionMismatch Matrix(b1) + b3
+
+            # If the AbstractMatrix is diagonal, we should return a BlockDiagonal.
+            # Test the StridedMatrix method.
+            @test Matrix(Diagonal(b1)) + b1 isa BlockDiagonal  # StridedMatrix
+            @test b1 + Matrix(Diagonal(b1)) isa BlockDiagonal
+
+            # Test the AbstractMatrix method.
+            @test Matrix(Diagonal(b1))' + b1 isa BlockDiagonal
+            @test b1 + Matrix(Diagonal(b1))' isa BlockDiagonal
         end
 
         @testset "BlockDiagonal + Diagonal" begin
