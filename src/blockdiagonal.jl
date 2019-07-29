@@ -1,10 +1,9 @@
 # Core functionality for the `BlockDiagonal` type
-# including implementing the BlockArray interface and AbstractArray interface
 
 """
-    BlockDiagonal{T, V<:AbstractMatrix{T}}
+    BlockDiagonal{T, V<:AbstractMatrix{T}} <: AbstractMatrix{T}
 
-A BlockMatrix with square blocks of type `V` on the diagonal, and zeros off the diagonal.
+A square matrix with square matrices on the diagonal, and zeros off the diagonal.
 """
 struct BlockDiagonal{T, V<:AbstractMatrix{T}} <: AbstractMatrix{T}
     blocks::Vector{V}
@@ -31,13 +30,54 @@ Return the on-diagonal blocks of B.
 blocks(B::BlockDiagonal) = B.blocks
 
 # BlockArrays-like functions
+"""
+    blocksizes(B::BlockDiagonal) -> Vector{Tuple}
+
+Return the size of each on-diagonal block in order.
+
+# Example
+```jldoctest
+julia> B = BlockDiagonal(rand(2, 2), rand(3, 3));
+
+julia> blocksizes(A)
+2-element Array{Tuple{Int64,Int64},1}:
+ (2, 2)
+ (3, 3)
+```
+"""
 blocksizes(B::BlockDiagonal) = map(size, blocks(B))
+
+"""
+    blocksize(B::BlockDiagonal, p::Integer, q::Integer=p) -> Tuple
+
+Return the size of the block at position `p, q`. Optionally specify only `p` to return the
+size of the p^th on-diagonal block.
+
+# Example
+```jldoctest
+julia> X = rand(2, 2); Y = rand(3, 3);
+
+julia> B = BlockDiagonal([X, Y]);
+
+julia> blocksize(B, 1)
+(2, 2)
+
+julia> blocksize(B, 1, 2)
+(2, 3)
+```
+"""
 blocksize(B::BlockDiagonal, p::Integer) = size(blocks(B)[p])
 function blocksize(B::BlockDiagonal, p::Integer, q::Integer)
     return size(blocks(B)[p], 1), size(blocks(B)[q], 2)
 end
 
-nblocks(B::BlockDiagonal, dim::Int) = dim > 2 ? 1 : length(blocks(B))
+"""
+    nblocks(B::BlockDiagonal[, dim])
+
+Return a tuple containing the number of blocks in each dimension. Optionally you can specify
+a dimension to just get the number of blocks in a single dimension i.e. on the diagonal.
+"""
+nblocks(B::BlockDiagonal, dim::Integer) = dim > 2 ? 1 : length(blocks(B))
 nblocks(B::BlockDiagonal) = length(blocks(B)), length(blocks(B))
 
 getblock(B::BlockDiagonal, p::Integer) = blocks(B)[p]

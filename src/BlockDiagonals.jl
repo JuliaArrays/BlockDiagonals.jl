@@ -1,6 +1,6 @@
 module BlockDiagonals
 
-using FillArrays
+using FillArrays: Zeros
 using LinearAlgebra
 
 export BlockDiagonal, blocks
