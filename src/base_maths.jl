@@ -24,10 +24,13 @@ function Base.:+(B1::BlockDiagonal, B2::BlockDiagonal)
 end
 
 Base.:+(M::AbstractMatrix, B::BlockDiagonal) = B + M
-Base.:+(B::BlockDiagonal, M::AbstractMatrix) = Matrix(B) + M
+Base.:+(B::BlockDiagonal, M::AbstractMatrix) = isdiag(M) ? B + Diagonal(M) : Matrix(B) + M
 
 function Base.:+(B::BlockDiagonal, M::StridedMatrix)
     size(B) == size(M) || throw(DimensionMismatch("dimensions must match"))
+    if isdiag(M)
+        return B + Diagonal(M)
+    end
     A = copy(M)
     row = 1
     for (j, block) in enumerate(blocks(B))
