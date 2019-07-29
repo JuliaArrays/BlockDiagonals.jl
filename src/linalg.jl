@@ -10,20 +10,31 @@ LinearAlgebra.logdet(B::BlockDiagonal) = sum(logdet, blocks(B))
 LinearAlgebra.tr(B::BlockDiagonal) = sum(tr, blocks(B))
 
 # Real matrices can have Complex eigenvalues; `eigvals` is not type stable.
-function LinearAlgebra.eigvals(B::BlockDiagonal; kwargs...)
-    # Currently no convention for sorting eigenvalues.
-    # This may change in later a Julia version https://github.com/JuliaLang/julia/pull/21598
-    return mapreduce(b -> eigvals(b; kwargs...), vcat, blocks(B))
+if VERSION < v"1.2.0-DEV.275"
+    # No convention for sorting eigenvalues in earlier versions of Julia.
+    function LinearAlgebra.eigvals(B::BlockDiagonal; kwargs...)
+        return mapreduce(b -> eigvals(b; kwargs...), vcat, blocks(B))
+    end
+else
+    # Sorting was introduced in Julia v1.2 by https://github.com/JuliaLang/julia/pull/21598
+    function LinearAlgebra.eigvals(
+        B::BlockDiagonal; sortby::Union{Function, Nothing}=LinearAlgebra.eigsortby, kwargs...
+    )
+        vals = mapreduce(b -> eigvals(b; kwargs...), vcat, blocks(B))
+        return LinearAlgebra.sorteig!(vals, sortby)
+    end
 end
 
-# This is copy of the definition for LinearAlgebra.
-# Should not be needed once we fix https://github.com/JuliaLang/julia/issues/31843
-function LinearAlgebra.eigmax(B::BlockDiagonal; kwargs...)
-    v = eigvals(B; kwargs...)
-    if eltype(v) <: Complex
-        throw(DomainError(A, "`A` cannot have complex eigenvalues."))
+if VERSION < v"1.3.0-DEV.426"
+    # This is copy of the definition for LinearAlgebra, only used to workaround
+    # https://github.com/JuliaLang/julia/issues/31843 which was fixed in Julia v1.3
+    function LinearAlgebra.eigmax(B::BlockDiagonal; kwargs...)
+        v = eigvals(B; kwargs...)
+        if eltype(v) <: Complex
+            throw(DomainError(A, "`A` cannot have complex eigenvalues."))
+        end
+        return maximum(v)
     end
-    return maximum(v)
 end
 
 svdvals_blockwise(B::BlockDiagonal) = mapreduce(svdvals, vcat, blocks(B))
