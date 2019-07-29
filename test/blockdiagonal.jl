@@ -71,7 +71,7 @@ using Test
         B = BlockDiagonal([rand(3, 3), rand(4, 4)])
         @test nblocks(B) == 2
         @test blocksizes(B) == [(3, 3), (4, 4)]
-        @test blocksize(B, 2) == blocksizes(B)[2]
+        @test blocksize(B, 2) == blocksizes(B)[2] == blocksize(B, 2, 2)
     end
 
     @testset "Equality" begin
