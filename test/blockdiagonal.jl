@@ -17,6 +17,8 @@ using Test
     b = rand(rng, N + N1)
 
     @testset "AbstractArray" begin
+        X = rand(2, 2); Y = rand(3, 3)
+
         @test size(b1) == (N, N)
         @test size(b1, 1) == N && size(b1, 2) == N
 
@@ -27,6 +29,11 @@ using Test
             end
         end
         @test all(eqs)
+
+        @testset "parent" begin
+            @test parent(b1) isa Vector{<:AbstractMatrix}
+            @test parent(BlockDiagonal([X, Y])) == [X, Y]
+        end
 
         @testset "similar" begin
             @test similar(b1) isa BlockDiagonal
