@@ -5,6 +5,4 @@
 [![Build Status](https://travis-ci.com/invenia/BlockDiagonals.jl.svg?branch=master)](https://travis-ci.com/invenia/BlockDiagonals.jl)
 [![Codecov](https://codecov.io/gh/invenia/BlockDiagonals.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/invenia/BlockDiagonals.jl)
 
-Functionality for working efficiently with [block diagonal matrices].
-
-[block diagonal matrices]: https://en.wikipedia.org/wiki/Block_matrix#Block_diagonal_matrices
+Functionality for working efficiently with [block diagonal matrices](https://en.wikipedia.org/wiki/Block_matrix#Block_diagonal_matrices).
