@@ -44,14 +44,15 @@ julia> blocksizes(A)
  (2, 2)
  (3, 3)
 ```
+See also [`blocksize`](@ref) for accessing the size of a single block efficiently.
 """
 blocksizes(B::BlockDiagonal) = map(size, blocks(B))
 
 """
     blocksize(B::BlockDiagonal, p::Integer, q::Integer=p) -> Tuple
 
-Return the size of the block at position `p, q`. Optionally specify only `p` to return the
-size of the p^th on-diagonal block.
+Return the size of the p^th on-diagonal block. Optionally specify `q` to return the
+size of block `p, q`.
 
 # Example
 ```jldoctest
@@ -65,6 +66,7 @@ julia> blocksize(B, 1)
 julia> blocksize(B, 1, 2)
 (2, 3)
 ```
+See also [`blocksizes`](@ref) for accessing the size of all on-diagonal blocks easily.
 """
 blocksize(B::BlockDiagonal, p::Integer) = size(blocks(B)[p])
 function blocksize(B::BlockDiagonal, p::Integer, q::Integer)
@@ -74,11 +76,11 @@ end
 """
     nblocks(B::BlockDiagonal[, dim])
 
-Return a tuple containing the number of blocks in each dimension. Optionally you can specify
-a dimension to just get the number of blocks in a single dimension i.e. on the diagonal.
+Return the number of on-diagonal blocks.
+
+The total number of blocks in the matrix is `nblocks(B)^2`.
 """
-nblocks(B::BlockDiagonal, dim::Integer) = dim > 2 ? 1 : length(blocks(B))
-nblocks(B::BlockDiagonal) = length(blocks(B)), length(blocks(B))
+nblocks(B::BlockDiagonal) = length(blocks(B))
 
 getblock(B::BlockDiagonal, p::Integer) = blocks(B)[p]
 function getblock(B::BlockDiagonal{T}, p::Integer, q::Integer) where T
