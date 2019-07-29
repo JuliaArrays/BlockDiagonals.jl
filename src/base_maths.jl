@@ -42,7 +42,6 @@ function Base.:+(B::BlockDiagonal, M::StridedMatrix)
     return A
 end
 
-Base.:+(M::Diagonal, B::BlockDiagonal) = B + M
 function Base.:+(B::BlockDiagonal, M::Diagonal)::BlockDiagonal
     size(B) == size(M) || throw(DimensionMismatch("dimensions must match"))
     A = copy(B)
