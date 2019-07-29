@@ -51,7 +51,7 @@ function Base.:+(B::BlockDiagonal, M::Diagonal)::BlockDiagonal
         nrows = size(block, 1)
         rows = row:(row + nrows-1)
         for (i, r) in enumerate(rows)
-            A[Block(p)][i, i] += d[r]
+            getblock(A, p)[i, i] += d[r]
         end
         row += nrows
     end
@@ -115,7 +115,7 @@ function Base.:*(B::BlockDiagonal, M::Diagonal)::BlockDiagonal
         ncols = size(block, 2)
         cols = col:(col + ncols-1)
         for (j, c) in enumerate(cols)
-            A[Block(p)][:, j] *= d[c]
+            getblock(A, p)[:, j] *= d[c]
         end
         col += ncols
     end
@@ -131,7 +131,7 @@ function Base.:*(M::Diagonal, B::BlockDiagonal)::BlockDiagonal
         nrows = size(block, 1)
         rows = row:(row + nrows-1)
         for (i, r) in enumerate(rows)
-            A[Block(p)][i, :] *= d[r]
+            getblock(A, p)[i, :] *= d[r]
         end
         row += nrows
     end

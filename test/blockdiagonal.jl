@@ -67,6 +67,13 @@ using Test
         @test isequal_blocksizes(b1, b2) == false
     end
 
+    @testset "blocks size" begin
+        B = BlockDiagonal([rand(3, 3), rand(4, 4)])
+        @test nblocks(B) == 2
+        @test blocksizes(B) == [(3, 3), (4, 4)]
+        @test blocksize(B, 2) == blocksizes(B)[2]
+    end
+
     @testset "Equality" begin
         # Equality
         @test b1 == b1
