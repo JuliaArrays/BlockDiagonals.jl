@@ -74,6 +74,13 @@ using Test
             @test_throws DimensionMismatch b3 * b1
         end
 
+        @testset "BlockDiagonal * Number" begin
+            @test b1 * 2 ≈ Matrix(b1) * 2 ≈ 2 * b1
+            @test b1 / 2 ≈ Matrix(b1) / 2
+            @test b1 * complex(2, 1) ≈ Matrix(b1) * complex(2, 1) ≈ complex(2, 1) * b1
+            @test b1 / complex(2, 1) ≈ Matrix(b1) / complex(2, 1)
+        end
+
         @testset "BlockDiagonal * Vector" begin
             @test b1 * a isa Vector
             @test b1 * a ≈ Matrix(b1) * a
