@@ -9,7 +9,7 @@ struct BlockDiagonal{T, V<:AbstractMatrix{T}} <: AbstractMatrix{T}
     blocks::Vector{V}
 
     function BlockDiagonal{T, V}(blocks::Vector{V}) where {T, V<:AbstractMatrix{T}}
-        all(is_square, blocks) || throw(ArgumentError("All blocks must be square."))
+        # all(is_square, blocks) || throw(ArgumentError("All blocks must be square.")) # removing the restriction for the square matrices 
         return new{T, V}(blocks)
     end
 end
