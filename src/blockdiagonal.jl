@@ -3,7 +3,7 @@
 """
     BlockDiagonal{T, V<:AbstractMatrix{T}} <: AbstractMatrix{T}
 
-A square matrix with square matrices on the diagonal, and zeros off the diagonal.
+A matrix with matrices on the diagonal, and zeros off the diagonal.
 """
 struct BlockDiagonal{T, V<:AbstractMatrix{T}} <: AbstractMatrix{T}
     blocks::Vector{V}
