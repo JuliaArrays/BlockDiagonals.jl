@@ -98,5 +98,8 @@ using Test
         B2 = [A1 zeros(2, 2); zeros(3, 4) A2]
 
 		@test B1 == B2
+		# Dimension check
+		@test sum(size.(B1.blocks, 1)) == size(B2, 1)
+		@test sum(size.(B1.blocks, 2)) == size(B2, 2)
     end  # Non-Square Matrix
 end
