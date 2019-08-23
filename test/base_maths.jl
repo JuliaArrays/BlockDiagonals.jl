@@ -113,7 +113,7 @@ using Test
         end
 
         @testset "Non-Square BlockDiagonal * Non-Square BlockDiagonal" begin
-    		b4 = BlockDiagonal([ones(2, 4), 2 * ones(3, 2)])
+    	    b4 = BlockDiagonal([ones(2, 4), 2 * ones(3, 2)])
             b5 = BlockDiagonal([3 * ones(2, 2), 2 * ones(4, 1)])
 
             @test b4 * b5 isa Array
