@@ -3,13 +3,12 @@
 """
     BlockDiagonal{T, V<:AbstractMatrix{T}} <: AbstractMatrix{T}
 
-A square matrix with square matrices on the diagonal, and zeros off the diagonal.
+A matrix with matrices on the diagonal, and zeros off the diagonal.
 """
 struct BlockDiagonal{T, V<:AbstractMatrix{T}} <: AbstractMatrix{T}
     blocks::Vector{V}
 
     function BlockDiagonal{T, V}(blocks::Vector{V}) where {T, V<:AbstractMatrix{T}}
-        all(is_square, blocks) || throw(ArgumentError("All blocks must be square."))
         return new{T, V}(blocks)
     end
 end
