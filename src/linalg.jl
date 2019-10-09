@@ -10,17 +10,18 @@ LinearAlgebra.logdet(B::BlockDiagonal) = sum(logdet, blocks(B))
 LinearAlgebra.tr(B::BlockDiagonal) = sum(tr, blocks(B))
 
 # Real matrices can have Complex eigenvalues; `eigvals` is not type stable.
-if VERSION < v"1.2.0-DEV.275"
-    # No convention for sorting eigenvalues in earlier versions of Julia.
-    function LinearAlgebra.eigvals(B::BlockDiagonal; kwargs...)
-        return mapreduce(b -> eigvals(b; kwargs...), vcat, blocks(B))
+@static if VERSION < v"1.2.0-DEV.275"
+    # No convention for sorting complex eigenvalues in earlier versions of Julia.
+    function LinearAlgebra.eigvals(B::BlockDiagonal, args...; kwargs...)
+        vals = mapreduce(b -> eigvals(b, args...; kwargs...), vcat, blocks(B))
+        return !isa(vals, Vector{<:Complex}) ? sort(vals) : vals
     end
 else
     # Sorting was introduced in Julia v1.2 by https://github.com/JuliaLang/julia/pull/21598
     function LinearAlgebra.eigvals(
-        B::BlockDiagonal; sortby::Union{Function, Nothing}=LinearAlgebra.eigsortby, kwargs...
+        B::BlockDiagonal, args...; sortby::Union{Function, Nothing}=LinearAlgebra.eigsortby, kwargs...
     )
-        vals = mapreduce(b -> eigvals(b; kwargs...), vcat, blocks(B))
+        vals = mapreduce(b -> eigvals(b, args...; kwargs...), vcat, blocks(B))
         return LinearAlgebra.sorteig!(vals, sortby)
     end
 end

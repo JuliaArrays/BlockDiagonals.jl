@@ -22,11 +22,29 @@ using Test
             @test f(b1) ≈ f(Matrix(b1))
         end
 
-        @testset "$g" for g in (eigvals, eigmin, eigmax)
-            for p in (true, false), s in (true, false)
+        @testset "permute=$p, scale=$s" for p in (true, false), s in (true, false)
+            @testset "$g" for g in (eigmin, eigmax)
                 # `b2` has real eigenvals, required for `eigmin`, `b1` has Complex eigenvals
-                @test g(b2; permute=p, scale=s) ≈ g(Matrix(b2), permute=p, scale=s)
+                @test g(b2; permute=p, scale=s) ≈ g(Matrix(b2); permute=p, scale=s)
             end
+            @testset "eigvals" begin
+                result = eigvals(b2; permute=p, scale=s)
+                expected = eigvals(Matrix(b2), permute=p, scale=s)
+                @static if VERSION < v"1.2"
+                    # the `eigvals` method we hit above did not sort real eigenvalues pre-v1.2
+                    # but some `eigvals` methods did, so we always sort real eigenvalues.
+                    @test sort!(result) ≈ sort!(expected)
+                else
+                    @test result ≈ expected
+                end
+            end
+        end
+
+        @testset "eigvals on LinearAlgebra types" begin
+            # `eigvals` has different methods for different types, e.g. Hermitian
+            b_herm = BlockDiagonal([Hermitian(rand(rng, 3, 3) + I) for _ in 1:3])
+            @test eigvals(b_herm) ≈ eigvals(Matrix(b_herm))
+            @test eigvals(b_herm, 1.0, 2.0) ≈ eigvals(Hermitian(Matrix(b_herm)), 1.0, 2.0)
         end
 
         # Requires a postive semi-definite matrix
