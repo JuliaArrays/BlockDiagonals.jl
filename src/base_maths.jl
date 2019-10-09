@@ -83,39 +83,45 @@ function _check_matmul_dims(A::AbstractMatrix, B::AbstractMatrix)
     ))
 end
 
-function Base.:*(B::BlockDiagonal, M::AbstractMatrix)
+function Base.:*(B::BlockDiagonal{T}, M::AbstractMatrix) where T
     _check_matmul_dims(B, M)
+    bblocks = blocks(B)
+    new_blocksizes = zip(size.(bblocks, 1), fill(size(M, 2), length(bblocks)))
+    d = similar.(bblocks, T, new_blocksizes)
     ed = 0
-    d = map(blocks(B)) do block
+    @inbounds @views for (p, block) in enumerate(bblocks)
         st = ed + 1  # start
         ed += size(block, 2)  # end
-        return block * M[st:ed, :]
+        mul!(d[p], block, M[st:ed, :])
     end
-    return reduce(vcat, d)::Matrix
+    return reduce(vcat, d)
 end
 
-function Base.:*(M::AbstractMatrix, B::BlockDiagonal)
+function Base.:*(M::AbstractMatrix, B::BlockDiagonal{T}) where T
     _check_matmul_dims(M, B)
+    bblocks = blocks(B)
+    new_blocksizes = zip(fill(size(M, 1), length(bblocks)), size.(bblocks, 2))
+    d = similar.(bblocks, T, new_blocksizes)
     ed = 0
-    d = map(blocks(B)) do block
+    @inbounds @views for (p, block) in enumerate(bblocks)
         st = ed + 1  # start
         ed += size(block, 1)  # end
-        return M[:, st:ed] * block
+        mul!(d[p], M[:, st:ed], block)
     end
-    return reduce(hcat, d)::Matrix
+    return reduce(hcat, d)
 end
 
 # Diagonal
 function Base.:*(B::BlockDiagonal, M::Diagonal)::BlockDiagonal
     _check_matmul_dims(B, M)
-    A = copy(B)
-    d = diag(M)
+    A = similar(B)
+    d = parent(M)
     col = 1
-    for (p, block) in enumerate(blocks(B))
+    @inbounds @views for (p, block) in enumerate(blocks(B))
         ncols = size(block, 2)
         cols = col:(col + ncols-1)
         for (j, c) in enumerate(cols)
-            getblock(A, p)[:, j] *= d[c]
+            mul!(getblock(A, p)[:, j], block[:, j], d[c])
         end
         col += ncols
     end
@@ -124,14 +130,14 @@ end
 
 function Base.:*(M::Diagonal, B::BlockDiagonal)::BlockDiagonal
     _check_matmul_dims(M, B)
-    A = copy(B)
-    d = diag(M)
+    A = similar(B)
+    d = parent(M)
     row = 1
-    for (p, block) in enumerate(blocks(B))
+    @inbounds @views for (p, block) in enumerate(blocks(B))
         nrows = size(block, 1)
         rows = row:(row + nrows-1)
         for (i, r) in enumerate(rows)
-            getblock(A, p)[i, :] *= d[r]
+            mul!(getblock(A, p)[i, :], block[i, :], d[r])
         end
         row += nrows
     end
