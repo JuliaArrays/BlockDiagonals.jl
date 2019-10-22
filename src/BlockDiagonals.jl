@@ -1,5 +1,6 @@
 module BlockDiagonals
 
+using Base: @propagate_inbounds
 using FillArrays: Zeros
 using LinearAlgebra
 

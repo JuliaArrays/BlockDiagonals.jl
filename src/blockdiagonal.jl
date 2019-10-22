@@ -106,7 +106,7 @@ Base.size(B::BlockDiagonal) = sum(first∘size, blocks(B)), sum(last∘size, blo
 Base.similar(B::BlockDiagonal) = BlockDiagonal(map(similar, blocks(B)))
 Base.parent(B::BlockDiagonal) = B.blocks
 
-function Base.setindex!(B::BlockDiagonal{T}, v, i::Integer, j::Integer) where T
+@propagate_inbounds function Base.setindex!(B::BlockDiagonal, v, i::Integer, j::Integer)
     p, i_, j_ = _block_indices(B, i, j)
     if p > 0
         @inbounds getblock(B, p)[i_, end+j_] = v
@@ -118,10 +118,10 @@ function Base.setindex!(B::BlockDiagonal{T}, v, i::Integer, j::Integer) where T
     return v
 end
 
-function Base.getindex(B::BlockDiagonal{T}, i::Integer, j::Integer) where T
+@propagate_inbounds function Base.getindex(B::BlockDiagonal{T}, i::Integer, j::Integer) where T
     p, i, j = _block_indices(B, i, j)
     # if not in on-diagonal block `p` then value at `i, j` must be zero
-    return p > 0 ? getblock(B, p)[i, end + j] : zero(T)
+    @inbounds return p > 0 ? getblock(B, p)[i, end + j] : zero(T)
 end
 
 # Transform indices `i, j` (identifying entry `Matrix(B)[i, j]`) into indices `p, i, j` such
