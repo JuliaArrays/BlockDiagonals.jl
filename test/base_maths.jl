@@ -68,6 +68,7 @@ using Test
     end  # Addition
 
     @testset "Multiplication" begin
+
         @testset "BlockDiagonal * BlockDiagonal" begin
             @test b1 * b1 isa BlockDiagonal
             @test Matrix(b1 * b1) ≈ Matrix(b1) * Matrix(b1)
@@ -96,6 +97,13 @@ using Test
             @test A′ * b1 isa Matrix
             @test A′ * b1 ≈ A′ * Matrix(b1)
             @test_throws DimensionMismatch A * b1
+
+            # degenerate cases
+            m = rand(0, 0)
+            @test m * BlockDiagonal([m]) == m * m == m
+            m = rand(5, 0)
+            @test m' * BlockDiagonal([m]) == m' * m == rand(0, 0)
+            @test m * BlockDiagonal([m']) == m * m' == zeros(5, 5)
         end
 
         @testset "BlockDiagonal * Diagonal" begin
