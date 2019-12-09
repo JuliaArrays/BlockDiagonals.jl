@@ -76,11 +76,25 @@ function Base.:*(B1::BlockDiagonal, B2::BlockDiagonal)
     end
 end
 
-function _check_matmul_dims(A::AbstractMatrix, B::AbstractMatrix)
+function _check_matmul_dims(A::AbstractMatrix, B::AbstractVecOrMat)
     # match error message from LinearAlgebra
     size(A, 2) == size(B, 1) || throw(DimensionMismatch(
         "A has dimensions $(size(A)) but B has dimensions $(size(B))"
     ))
+end
+
+function Base.:*(B::BlockDiagonal{T}, v::AbstractVector) where T
+    _check_matmul_dims(B, v)
+    bblocks = blocks(B)
+    new_blocksizes = size.(bblocks, 1)
+    d = similar.(bblocks, T, new_blocksizes)
+    ed = 0
+    @inbounds @views for (p, block) in enumerate(bblocks)
+        st = ed + 1  # start
+        ed += size(block, 2)  # end
+        mul!(d[p], block, v[st:ed])
+    end
+    return reduce(vcat, d)
 end
 
 function Base.:*(B::BlockDiagonal{T}, M::AbstractMatrix) where T
