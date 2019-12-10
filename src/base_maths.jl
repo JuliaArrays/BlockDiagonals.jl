@@ -83,30 +83,23 @@ function _check_matmul_dims(A::AbstractMatrix, B::AbstractVecOrMat)
     ))
 end
 
-function Base.:*(B::BlockDiagonal{T}, v::AbstractVector) where T
-    _check_matmul_dims(B, v)
-    bblocks = blocks(B)
-    new_blocksizes = size.(bblocks, 1)
-    d = similar.(bblocks, T, new_blocksizes)
-    ed = 0
-    @inbounds @views for (p, block) in enumerate(bblocks)
-        st = ed + 1  # start
-        ed += size(block, 2)  # end
-        mul!(d[p], block, v[st:ed])
-    end
-    return reduce(vcat, d)
-end
+_mulblocksizes(bblocks, ::AbstractVector) = size.(bblocks, 1)
+_mulblocksizes(bblocks, M::AbstractMatrix) =
+    zip(size.(bblocks, 1), Base.Iterators.repeated(size(M, 2), length(bblocks)))
 
-function Base.:*(B::BlockDiagonal{T}, M::AbstractMatrix) where T
-    _check_matmul_dims(B, M)
+Base.:*(B::BlockDiagonal, x::AbstractVector) = _mul(B, x)
+Base.:*(B::BlockDiagonal, X::AbstractMatrix) = _mul(B, X)
+
+function _mul(B::BlockDiagonal{T}, x::AbstractVecOrMat) where {T}
+    _check_matmul_dims(B, x)
     bblocks = blocks(B)
-    new_blocksizes = zip(size.(bblocks, 1), fill(size(M, 2), length(bblocks)))
+    new_blocksizes = _mulblocksizes(bblocks, x)
     d = similar.(bblocks, T, new_blocksizes)
     ed = 0
     @inbounds @views for (p, block) in enumerate(bblocks)
         st = ed + 1  # start
         ed += size(block, 2)  # end
-        mul!(d[p], block, M[st:ed, :])
+        mul!(d[p], block, selectdim(x, 1, st:ed))
     end
     return reduce(vcat, d)
 end
