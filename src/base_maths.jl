@@ -84,8 +84,9 @@ function _check_matmul_dims(A::AbstractMatrix, B::AbstractVecOrMat)
 end
 
 _mulblocksizes(bblocks, ::AbstractVector) = size.(bblocks, 1)
-_mulblocksizes(bblocks, M::AbstractMatrix) =
-    zip(size.(bblocks, 1), Base.Iterators.repeated(size(M, 2), length(bblocks)))
+function _mulblocksizes(bblocks, M::AbstractMatrix)
+    return zip(size.(bblocks, 1), Base.Iterators.repeated(size(M, 2), length(bblocks)))
+end
 
 Base.:*(B::BlockDiagonal, x::AbstractVector) = _mul(B, x)
 Base.:*(B::BlockDiagonal, X::AbstractMatrix) = _mul(B, X)
