@@ -17,6 +17,17 @@ using Test
     a = rand(rng, N)
     b = rand(rng, N + N1)
 
+    @testset "mul!" begin
+        c = similar(b1)
+        d = similar(Matrix(b1))
+        mul!(c, b1, b1)
+        mul!(d, Matrix(b1), Matrix(b1))
+        @test c ≈ d
+        mul!(c, b1, b1, 2., 3.)
+        mul!(d, Matrix(b1), Matrix(b1), 2., 3.)
+        @test c ≈ d
+    end
+
     @testset "Unary Linear Algebra" begin
         @testset "$f" for f in (adjoint, det, diag, eigvals, inv, pinv, svdvals, transpose, tr)
             @test f(b1) ≈ f(Matrix(b1))
