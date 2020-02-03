@@ -143,3 +143,27 @@ function _block_indices(B::BlockDiagonal, i::Integer, j::Integer)
     end
     return p, i, j
 end
+
+
+import Base: copyto!, copy!
+
+
+function copy!(dest::BlockDiagonal, src::BlockDiagonal)
+    copyto!(dest, src)
+    return dest
+end
+
+function copyto!(dest::BlockDiagonal, src::BlockDiagonal)
+    isequal_blocksizes(dest, src) || throw(DimensionMismatch("dest and src have different block sizes"))
+    for (i, b) in enumerate(blocks(dest))
+        copyto!(b, src.blocks[i])
+    end
+    return dest
+end
+
+function Base.fill!(A::BlockDiagonal, x::Number)
+    for b in A.blocks
+        Base.fill!(b, x)
+    end
+    return A
+end
