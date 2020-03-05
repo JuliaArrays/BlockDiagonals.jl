@@ -160,10 +160,3 @@ function copyto!(dest::BlockDiagonal, src::BlockDiagonal)
     end
     return dest
 end
-
-function Base.fill!(A::BlockDiagonal, x::Number)
-    for b in A.blocks
-        Base.fill!(b, x)
-    end
-    return A
-end
