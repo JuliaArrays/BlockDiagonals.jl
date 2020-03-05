@@ -94,8 +94,8 @@ LinearAlgebra.mul!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal) = Linea
 function LinearAlgebra.mul!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal, α::Number, β::Number)
     isequal_blocksizes(A, B) || throw(DimensionMismatch("A and B have different block sizes"))
     isequal_blocksizes(C, A) || throw(DimensionMismatch("C has incompatible block sizes"))
-    for (i, b) in enumerate(blocks(C))
-        LinearAlgebra.mul!(b, A.blocks[i], B. blocks[i], α, β)
+    for i in 1:length(blocks(C))
+        LinearAlgebra.mul!(C.blocks[i], A.blocks[i], B.blocks[i], α, β)
     end
     return C
 end
