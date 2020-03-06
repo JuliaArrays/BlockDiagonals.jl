@@ -88,15 +88,18 @@ function Base.getproperty(C::Cholesky{T, <:BlockDiagonal{T}}, x::Symbol) where T
 end
 
 # 3-Argument mul!
-LinearAlgebra.mul!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal) = LinearAlgebra.mul!(C, A, B, true, false)
+LinearAlgebra.mul!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal) = _mul!(C, A, B, true, false)
 
-# 5-Argument mul!
-function LinearAlgebra.mul!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal, α::Number, β::Number)
+if VERSION ≥ v"1.3"
+    LinearAlgebra.mul!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal, α::Number, β::Number) = _mul!(C, A, B, α, β)
+end
+
+function _mul!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal, α::Number, β::Number)
     isequal_blocksizes(A, B) || throw(DimensionMismatch("A and B have different block sizes"))
     isequal_blocksizes(C, A) || throw(DimensionMismatch("C has incompatible block sizes"))
     for i in 1:length(blocks(C))
         LinearAlgebra.mul!(C.blocks[i], A.blocks[i], B.blocks[i], α, β)
     end
+
     return C
 end
-

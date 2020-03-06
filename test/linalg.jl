@@ -23,9 +23,11 @@ using Test
         mul!(c, b1, b1)
         mul!(d, Matrix(b1), Matrix(b1))
         @test c ≈ d
-        mul!(c, b1, b1, 2., 3.)
-        mul!(d, Matrix(b1), Matrix(b1), 2., 3.)
-        @test c ≈ d
+        if VERSION ≥ v"1.3"
+            mul!(c, b1, b1, 2., 3.)
+            mul!(d, Matrix(b1), Matrix(b1), 2., 3.)
+            @test c ≈ d
+        end
     end
 
     @testset "Unary Linear Algebra" begin
