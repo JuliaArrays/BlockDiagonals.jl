@@ -145,11 +145,6 @@ function _block_indices(B::BlockDiagonal, i::Integer, j::Integer)
 end
 
 function Base.copy!(dest::BlockDiagonal, src::BlockDiagonal)
-    copyto!(dest, src)
-    return dest
-end
-
-function copyto!(dest::BlockDiagonal, src::BlockDiagonal)
     isequal_blocksizes(dest, src) || throw(DimensionMismatch("dest and src have different block sizes"))
     for (i, b) in enumerate(blocks(dest))
         copyto!(b, src.blocks[i])

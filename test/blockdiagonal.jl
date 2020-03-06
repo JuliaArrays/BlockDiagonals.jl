@@ -106,12 +106,12 @@ using Test
     @testset "copy" begin
         bc = similar(b1)
 
-        copyto!(bc, b1)
+        copy!(bc, b1)
         @test bc == b1
 
         c = copy(b1)
         @test c == b1
 
-        @test_throws DimensionMismatch copyto!(b2, b1)
+        @test_throws DimensionMismatch copy!(b2, b1)
     end
 end
