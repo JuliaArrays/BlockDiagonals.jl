@@ -144,11 +144,7 @@ function _block_indices(B::BlockDiagonal, i::Integer, j::Integer)
     return p, i, j
 end
 
-
-import Base: copyto!, copy!
-
-
-function copy!(dest::BlockDiagonal, src::BlockDiagonal)
+function Base.copy!(dest::BlockDiagonal, src::BlockDiagonal)
     copyto!(dest, src)
     return dest
 end
