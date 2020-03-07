@@ -102,4 +102,16 @@ using Test
 	@test sum(size.(B1.blocks, 1)) == size(B2, 1)
 	@test sum(size.(B1.blocks, 2)) == size(B2, 2)
     end  # Non-Square Matrix
+
+    @testset "copy" begin
+        bc = similar(b1)
+
+        copy!(bc, b1)
+        @test bc == b1
+
+        c = copy(b1)
+        @test c == b1
+
+        @test_throws DimensionMismatch copy!(b2, b1)
+    end
 end
