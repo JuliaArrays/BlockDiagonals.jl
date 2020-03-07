@@ -24,8 +24,8 @@ using Test
         mul!(d, Matrix(b1), Matrix(b1))
         @test c ≈ d
         if VERSION ≥ v"1.3"
-            mul!(c, b1, b1, 2., 3.)
-            mul!(d, Matrix(b1), Matrix(b1), 2., 3.)
+            mul!(c, b1, b1, 2.0, 3.0)
+            mul!(d, Matrix(b1), Matrix(b1), 2.0, 3.0)
             @test c ≈ d
         end
     end
