@@ -38,6 +38,33 @@ if VERSION < v"1.3.0-DEV.426"
     end
 end
 
+"""
+    blockEigen(B::BlockDiagonal, args...; kwargs...) -> Eigen
+
+Computes the eigen decomposition for each block separately and keeps the block diagonal 
+structure in the matrix of eigenvectors. Hence any parameters given are applied to each
+eigen decomposition separately, but there is f.e. no global sorting of eigen values.
+"""
+function blockEigen(B::BlockDiagonal, args...; kwargs...)
+    eigens = [eigen(b, args...; kwargs...) for b in blocks(B)]
+    #promote to common types
+    values = promote([e.values for e in eigens]...)
+    vectors = promote([e.vectors for e in eigens]...)
+    Eigen(vcat(values...), BlockDiagonal([vectors...]))
+end 
+
+## This function never keeps the block diagonal structure for type stability.
+function LinearAlgebra.eigen(B::BlockDiagonal, args...; kwargs...)
+    values, vectors = blockEigen(B, args...; kwargs...)
+    vectors = Matrix(vectors) # always convert to avoid typestability
+    if haskey(kwargs, :sortby)
+        Eigen(LinearAlgebra.sorteig!(values, vectors,  kwargs[:sortby])...)
+    else
+        Eigen(LinearAlgebra.sorteig!(values, vectors)...)
+    end
+end
+
+
 svdvals_blockwise(B::BlockDiagonal) = mapreduce(svdvals, vcat, blocks(B))
 LinearAlgebra.svdvals(B::BlockDiagonal) = sort!(svdvals_blockwise(B); rev=true)
 
