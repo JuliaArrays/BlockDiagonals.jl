@@ -61,10 +61,14 @@ end
 function LinearAlgebra.eigen(B::BlockDiagonal, args...; kwargs...)
     values, vectors = blockEigen(B, args...; kwargs...)
     vectors = Matrix(vectors) # always convert to avoid typestability
-    if haskey(kwargs, :sortby)
-        Eigen(LinearAlgebra.sorteig!(values, vectors,  kwargs[:sortby])...)
-    else
-        Eigen(LinearAlgebra.sorteig!(values, vectors)...)
+    @static if VERSION > v"1.2.0-DEV.275"
+        if haskey(kwargs, :sortby)
+            Eigen(LinearAlgebra.sorteig!(values, vectors,  kwargs[:sortby])...)
+        else
+            Eigen(LinearAlgebra.sorteig!(values, vectors)...)
+        end
+    else 
+        Eigen(values, vectors) 
     end
 end
 

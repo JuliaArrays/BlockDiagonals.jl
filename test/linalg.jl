@@ -53,6 +53,44 @@ using Test
             end
         end
 
+        @testset "eigen decomposition" begin
+            # this hits both eigen(BlockDiagonal) and blockEigen, since the former uses the latter
+            evalsBlock, evecsBlock = eigen(b1)
+            evals, evecs = eigen(Matrix(b1))
+            @static if VERSION < v"1.2"
+                # pre-v1.2 we need to sort the eigenvalus consistently
+                sortPermBlock = argsort(abs2.(evalsBlock))
+                evalsBlock = evalsBlock[sortPermBlock]
+                evecsBlock = evecsBlock[sortPermBlock, :]
+                sortPerm = argsort(abs2.(evals))
+                evals = evals[sortPermBlock]
+                evecs = evecs[sortPermBlock, :]
+            end
+
+            @test evalsBlock ≈ evals
+            # comparing vectors is more difficult due to a sign ambiguity
+            # So we try adding and subtracting the vectors, keeping the smallest magnitude for each entry
+            # and compare that with something small.
+            # I performed some tests and the largest deviation I found was ~5e-14
+            @test all(min.(abs.(evecsBlock - evecs), abs.(evecsBlock + evecs)) .< 1e-13)
+
+            # also try for Symmetric matrices
+            evalsBlock, evecsBlock = eigen(Symmetric(b1))
+            evals, evecs = eigen(Symmetric(Matrix(b1)))
+            @static if VERSION < v"1.2"
+                # pre-v1.2 we need to sort the eigenvalus consistently
+                sortPermBlock = argsort(evalsBlock)
+                evalsBlock = evalsBlock[sortPermBlock]
+                evecsBlock = evecsBlock[sortPermBlock, :]
+                sortPerm = argsort(evals)
+                evals = evals[sortPermBlock]
+                evecs = evecs[sortPermBlock, :]
+            end
+
+            @test evalsBlock ≈ evals
+            @test all(min.(abs.(evecsBlock - evecs), abs.(evecsBlock + evecs)) .< 1e-13)
+        end
+
         @testset "eigvals on LinearAlgebra types" begin
             # `eigvals` has different methods for different types, e.g. Hermitian
             b_herm = BlockDiagonal([Hermitian(rand(rng, 3, 3) + I) for _ in 1:3])

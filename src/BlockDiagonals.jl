@@ -6,7 +6,7 @@ using FillArrays: Zeros
 using LinearAlgebra
 
 export BlockDiagonal, blocks
-export blocksize, blocksizes, nblocks
+export blocksize, blocksizes, nblocks, blockEigen
 
 include("blockdiagonal.jl")
 include("base_maths.jl")
