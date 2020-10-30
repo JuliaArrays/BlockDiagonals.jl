@@ -9,6 +9,10 @@ LinearAlgebra.det(B::BlockDiagonal) = prod(det, blocks(B))
 LinearAlgebra.logdet(B::BlockDiagonal) = sum(logdet, blocks(B))
 LinearAlgebra.tr(B::BlockDiagonal) = sum(tr, blocks(B))
 
+for f in (:Symmetric, :Hermitian)
+    @eval LinearAlgebra.$f(B::BlockDiagonal, uplo::Symbol=:U) = BlockDiagonal(map($f, blocks(B)))
+end
+
 # Real matrices can have Complex eigenvalues; `eigvals` is not type stable.
 @static if VERSION < v"1.2.0-DEV.275"
     # No convention for sorting complex eigenvalues in earlier versions of Julia.
