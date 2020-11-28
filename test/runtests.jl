@@ -1,5 +1,8 @@
 using BlockDiagonals
+using ChainRulesCore
+using ChainRulesTestUtils
 using Documenter
+using FiniteDifferences
 using Test
 
 @testset "BlockDiagonals" begin

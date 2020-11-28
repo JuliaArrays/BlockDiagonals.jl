@@ -17,6 +17,11 @@ function BlockDiagonal(blocks::Vector{V}) where {T, V<:AbstractMatrix{T}}
     return BlockDiagonal{T, V}(blocks)
 end
 
+function ChainRulesCore.rrule(::Type{<:BlockDiagonal}, blocks::Vector{V}) where {V}
+    BlockDiagonal_pullback(Δ::Composite) = (NO_FIELDS, Δ.blocks)
+    return BlockDiagonal(blocks), BlockDiagonal_pullback
+end
+
 BlockDiagonal(B::BlockDiagonal) = B
 
 is_square(A::AbstractMatrix) = size(A, 1) == size(A, 2)
@@ -102,6 +107,20 @@ end
 
 ## Base
 Base.Matrix(B::BlockDiagonal) = cat(blocks(B)...; dims=(1, 2))
+
+function ChainRulesCore.rrule(::Type{<:Base.Matrix}, B::BlockDiagonal)
+    function Matrix_pullback(Δ::AbstractMatrix)
+        nrows = size.(B.blocks, 1)
+        ncols = size.(B.blocks, 2)
+        row_idxs = cumsum(nrows) .- nrows .+ 1
+        col_idxs = cumsum(ncols) .- ncols .+ 1
+
+        Δblocks = [Δ[row_idxs[n]:(row_idxs[n] + nrows[n] - 1), col_idxs[n]:(col_idxs[n] + ncols[n] - 1)] for n in eachindex(B.blocks)]
+        return (NO_FIELDS, Composite{typeof(B)}(blocks=Δblocks))
+    end
+    return Matrix(B), Matrix_pullback
+end
+
 Base.size(B::BlockDiagonal) = sum(first∘size, blocks(B)), sum(last∘size, blocks(B))
 Base.similar(B::BlockDiagonal) = BlockDiagonal(map(similar, blocks(B)))
 Base.parent(B::BlockDiagonal) = B.blocks

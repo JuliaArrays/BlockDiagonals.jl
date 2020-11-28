@@ -1,6 +1,7 @@
 module BlockDiagonals
 
 using Base: @propagate_inbounds
+using ChainRulesCore
 using FillArrays: Zeros
 using LinearAlgebra
 
