@@ -115,7 +115,10 @@ function ChainRulesCore.rrule(::Type{<:Base.Matrix}, B::BlockDiagonal)
         row_idxs = cumsum(nrows) .- nrows .+ 1
         col_idxs = cumsum(ncols) .- ncols .+ 1
 
-        Δblocks = [Δ[row_idxs[n]:(row_idxs[n] + nrows[n] - 1), col_idxs[n]:(col_idxs[n] + ncols[n] - 1)] for n in eachindex(B.blocks)]
+        Δblocks = [
+            Δ[row_idxs[n]:(row_idxs[n] + nrows[n] - 1), col_idxs[n]:(col_idxs[n] + ncols[n] - 1)] 
+            for n in eachindex(B.blocks)
+        ]
         return (NO_FIELDS, Composite{typeof(B)}(blocks=Δblocks))
     end
     return Matrix(B), Matrix_pullback
