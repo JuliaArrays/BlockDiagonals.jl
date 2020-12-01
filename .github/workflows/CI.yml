@@ -2,7 +2,7 @@ name: CI
 # Run on master, any tag or any pull request
 on:
   schedule:
-    - cron: 0 * * * *
+    - cron: 0 2 * * *
   push:
     branches: [master]
     tags: ["*"]
