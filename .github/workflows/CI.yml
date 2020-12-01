@@ -1,6 +1,8 @@
 name: CI
 # Run on master, any tag or any pull request
 on:
+  schedule:
+    - cron: 0 * * * *
   push:
     branches: [master]
     tags: ["*"]
@@ -21,6 +23,7 @@ jobs:
           - ubuntu-latest
         arch:
           - x64
+          - x86
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
