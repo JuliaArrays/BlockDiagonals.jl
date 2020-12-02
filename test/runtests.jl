@@ -1,5 +1,8 @@
 using BlockDiagonals
+using ChainRulesCore
+using ChainRulesTestUtils
 using Documenter
+using FiniteDifferences # For overloading to_vec
 using Test
 
 @testset "BlockDiagonals" begin

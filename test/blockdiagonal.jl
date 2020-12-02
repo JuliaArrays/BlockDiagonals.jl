@@ -3,6 +3,16 @@ using BlockDiagonals: isequal_blocksizes
 using Random
 using Test
 
+function FiniteDifferences.to_vec(X::BlockDiagonal)
+    x, blocks_from_vec = to_vec(X.blocks)
+    BlockDiagonal_from_vec(x_vec) = BlockDiagonal(blocks_from_vec(x_vec))
+    return x, BlockDiagonal_from_vec
+end
+
+function Base.isapprox(C::Composite{<:BlockDiagonal}, D::BlockDiagonal; kwargs...)
+    return isapprox(C.blocks, D.blocks; kwargs...)
+end
+
 @testset "blockdiagonal.jl" begin
     rng = MersenneTwister(123456)
     N1, N2, N3 = 3, 4, 5
@@ -60,6 +70,21 @@ using Test
             @test_throws ArgumentError X[1, 7] = 1
         end
     end  # AbstractArray
+
+    @testset "ChainRules" begin
+        @testset "BlockDiagonal" begin
+            x = [randn(1, 2), randn(2, 2)]
+            x̄ = [randn(1, 2), randn(2, 2)]
+            ȳ = Composite{typeof(BlockDiagonal(x))}(blocks=[randn(1, 2), randn(2, 2)])
+            rrule_test(BlockDiagonal, ȳ, (x, x̄))
+        end
+        @testset "Matrix" begin
+            D = BlockDiagonal([randn(1, 2), randn(2, 2)])
+            D̄ = Composite{typeof(D)}((blocks=[randn(1, 2), randn(2, 2)]), )
+            Ȳ = randn(size(D))
+            rrule_test(Matrix, Ȳ, (D, D̄))
+        end
+    end
 
     @testset "isequal_blocksizes" begin
         @test isequal_blocksizes(b1, b1) == true
