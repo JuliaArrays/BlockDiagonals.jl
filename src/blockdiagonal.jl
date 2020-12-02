@@ -111,7 +111,7 @@ Base.Matrix(B::BlockDiagonal) = cat(blocks(B)...; dims=(1, 2))
 function ChainRulesCore.rrule(::Type{<:Base.Matrix}, B::T) where {T<:BlockDiagonal}
     nrows = size.(B.blocks, 1)
     ncols = size.(B.blocks, 2)
-    function Matrix_pullback(Δ::AbstractMatrix)
+    function Matrix_pullback(Δ::Matrix)
         row_idxs = cumsum(nrows) .- nrows .+ 1
         col_idxs = cumsum(ncols) .- ncols .+ 1
 
