@@ -40,6 +40,8 @@ end
         end
         @test all(eqs)
 
+        @inferred Matrix(b1)
+
         @testset "BlockDiagonal does not copy" begin
             Bxy = BlockDiagonal([X, Y])
             X[1] = 1.1
