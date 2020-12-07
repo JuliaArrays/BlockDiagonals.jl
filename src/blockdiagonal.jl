@@ -106,7 +106,22 @@ function setblock!(B::BlockDiagonal{T, V}, v::V, p::Int, q::Int) where {T, V}
 end
 
 ## Base
-Base.Matrix(B::BlockDiagonal) = cat(blocks(B)...; dims=(1, 2))
+function Base.Matrix(B::BlockDiagonal{T}) where {T}
+    A = Matrix{T}(undef, size(B))
+    fill!(A, zero(T))
+
+    nrows = size.(B.blocks, 1)
+    ncols = size.(B.blocks, 2)
+    row_idxs = cumsum(nrows) .- nrows .+ 1
+    col_idxs = cumsum(ncols) .- ncols .+ 1
+
+    for n in eachindex(blocks(B))
+        block_rows = row_idxs[n]:(row_idxs[n] + nrows[n] - 1)
+        block_cols = col_idxs[n]:(col_idxs[n] + ncols[n] - 1)
+        A[block_rows, block_cols] .= blocks(B)[n]
+    end
+    return A
+end
 
 function ChainRulesCore.rrule(::Type{<:Base.Matrix}, B::T) where {T<:BlockDiagonal}
     nrows = size.(B.blocks, 1)
