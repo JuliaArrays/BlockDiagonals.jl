@@ -107,8 +107,7 @@ end
 
 ## Base
 function Base.Matrix(B::BlockDiagonal{T}) where {T}
-    A = Matrix{T}(undef, size(B))
-    fill!(A, zero(T))
+    A = zeros(T, size(B))
 
     nrows = size.(B.blocks, 1)
     ncols = size.(B.blocks, 2)
