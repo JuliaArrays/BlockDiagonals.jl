@@ -9,10 +9,6 @@ function FiniteDifferences.to_vec(X::BlockDiagonal)
     return x, BlockDiagonal_from_vec
 end
 
-function Base.isapprox(C::Composite{<:BlockDiagonal}, D::BlockDiagonal; kwargs...)
-    return isapprox(C.blocks, D.blocks; kwargs...)
-end
-
 @testset "blockdiagonal.jl" begin
     rng = MersenneTwister(123456)
     N1, N2, N3 = 3, 4, 5
