@@ -9,9 +9,9 @@ FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [compat]
-ChainRulesTestUtils = "0.5.8"
 ChainRulesCore = "0.9"
-FillArrays = "0.6, 0.7, 0.8, 0.9, 0.10"
+ChainRulesTestUtils = "0.5.8"
+FillArrays = "0.6, 0.7, 0.8, 0.9, 0.10, 0.11"
 julia = "1"
 
 [extras]
