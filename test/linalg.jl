@@ -59,14 +59,13 @@ using Test
             evals, evecs = eigen(Matrix(b1))
             @static if VERSION < v"1.2"
                 # pre-v1.2 we need to sort the eigenvalus consistently
-                sortPermBlock = argsort(abs2.(evalsBlock))
+                sortPermBlock = sortperm(abs2.(evalsBlock))
                 evalsBlock = evalsBlock[sortPermBlock]
-                evecsBlock = evecsBlock[sortPermBlock, :]
-                sortPerm = argsort(abs2.(evals))
-                evals = evals[sortPermBlock]
-                evecs = evecs[sortPermBlock, :]
+                evecsBlock = evecsBlock[:, sortPermBlock]
+                sortPerm = sortperm(abs2.(evals))
+                evals = evals[sortPerm]
+                evecs = evecs[:, sortPerm]
             end
-
             @test evalsBlock ≈ evals
             # comparing vectors is more difficult due to a sign ambiguity
             # So we try adding and subtracting the vectors, keeping the smallest magnitude for each entry
@@ -79,12 +78,12 @@ using Test
             evals, evecs = eigen(Symmetric(Matrix(b1)))
             @static if VERSION < v"1.2"
                 # pre-v1.2 we need to sort the eigenvalus consistently
-                sortPermBlock = argsort(evalsBlock)
+                sortPermBlock = sortperm(evalsBlock)
                 evalsBlock = evalsBlock[sortPermBlock]
-                evecsBlock = evecsBlock[sortPermBlock, :]
-                sortPerm = argsort(evals)
-                evals = evals[sortPermBlock]
-                evecs = evecs[sortPermBlock, :]
+                evecsBlock = evecsBlock[:, sortPermBlock]
+                sortPerm = sortperm(evals)
+                evals = evals[sortPerm]
+                evecs = evecs[:, sortPerm]
             end
 
             @test evalsBlock ≈ evals
