@@ -10,7 +10,7 @@ LinearAlgebra.logdet(B::BlockDiagonal) = sum(logdet, blocks(B))
 LinearAlgebra.tr(B::BlockDiagonal) = sum(tr, blocks(B))
 
 for f in (:Symmetric, :Hermitian)
-    @eval LinearAlgebra.$f(B::BlockDiagonal, uplo::Symbol=:U) = BlockDiagonal(map($f, blocks(B)))
+    @eval LinearAlgebra.$f(B::BlockDiagonal, uplo::Symbol=:U) = BlockDiagonal([$f(block, uplo) for block in blocks(B)])
 end
 
 # Real matrices can have Complex eigenvalues; `eigvals` is not type stable.
