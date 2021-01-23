@@ -152,5 +152,13 @@ function Base.:*(M::Diagonal, B::BlockDiagonal)::BlockDiagonal
     return A
 end
 
+function Base.:*(vt::Adjoint{T,<: AbstractVector}, B::BlockDiagonal{T}) where {T}
+    return (B' * parent(vt))'
+end
+
+function Base.:*(vt::Transpose{T,<: AbstractVector}, B::BlockDiagonal{T}) where {T}
+    return transpose(transpose(B) * parent(vt))
+end
+
 ## Division
 Base.:/(B::BlockDiagonal, n::Number) = BlockDiagonal(blocks(B) ./ n)

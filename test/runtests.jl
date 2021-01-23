@@ -4,6 +4,7 @@ using ChainRulesTestUtils
 using Documenter
 using FiniteDifferences # For overloading to_vec
 using Test
+using LinearAlgebra
 
 @testset "BlockDiagonals" begin
     # The doctests fail on x86, so only run them on 64-bit hardware

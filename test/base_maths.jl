@@ -88,7 +88,7 @@ using Test
             @test_throws DimensionMismatch b1 * b
         end
         @testset "Vector^T * BlockDiagonal" begin
-            @test a' * b1 isa {<:Number, <:Vector}
+            @test a' * b1 isa Adjoint{<:Number, <:Vector}
             @test transpose(a) * b1 isa Transpose{<:Number, <:Vector}
             @test a' * b1 ≈ a' * Matrix(b1)
             @test transpose(a) * b1 ≈ transpose(a) * Matrix(b1)
