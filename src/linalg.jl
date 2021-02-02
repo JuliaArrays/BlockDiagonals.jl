@@ -76,7 +76,7 @@ svdvals_blockwise(B::BlockDiagonal) = mapreduce(svdvals, vcat, blocks(B))
 LinearAlgebra.svdvals(B::BlockDiagonal) = sort!(svdvals_blockwise(B); rev=true)
 
 # `B = U * Diagonal(S) * Vt` with `U` and `Vt` `BlockDiagonal` (`S` only sorted block-wise).
-function svd_blockwise(B::BlockDiagonal{T}; full::Bool=false) where T
+function svd_blockwise(B::BlockDiagonal{T, <:AbstractVector}; full::Bool=false) where T
     U = Matrix{float(T)}[]
     S = Vector{float(T)}()
     Vt = Matrix{float(T)}[]
@@ -86,6 +86,17 @@ function svd_blockwise(B::BlockDiagonal{T}; full::Bool=false) where T
         append!(S, F.S)
         push!(Vt, F.Vt)
     end
+    return BlockDiagonal(U), S, BlockDiagonal(Vt)
+end
+function svd_blockwise(B::BlockDiagonal{T, <:Tuple}; full::Bool=false) where T
+    S = Vector{float(T)}()
+    U_Vt = ntuple(length(blocks(B))) do i
+        F = svd(getblock(B, i), full=full)
+        append!(S, F.S)
+        (F.U, F.Vt)
+    end
+    U = first.(U_Vt)
+    Vt = last.(U_Vt)
     return BlockDiagonal(U), S, BlockDiagonal(Vt)
 end
 

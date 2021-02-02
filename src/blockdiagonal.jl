@@ -1,19 +1,22 @@
 # Core functionality for the `BlockDiagonal` type
 
 """
-    BlockDiagonal{T, V<:AbstractMatrix{T}} <: AbstractMatrix{T}
+    BlockDiagonal{T, V} <: AbstractMatrix{T}
+    BlockDiagonal(blocks::V) -> BlockDiagonal{T,V}
 
 A matrix with matrices on the diagonal, and zeros off the diagonal.
-"""
-struct BlockDiagonal{T, V<:AbstractMatrix{T}} <: AbstractMatrix{T}
-    blocks::Vector{V}
 
-    function BlockDiagonal{T, V}(blocks::Vector{V}) where {T, V<:AbstractMatrix{T}}
-        return new{T, V}(blocks)
-    end
+!!! info "`V` type"
+    `blocks::V` should be a `Tuple` or `AbstractVector` where each component (each block) is
+    `<:AbstractMatrix{T}` for some common element type `T`.
+"""
+struct BlockDiagonal{T, V} <: AbstractMatrix{T}
+    blocks::V
 end
 
-function BlockDiagonal(blocks::Vector{V}) where {T, V<:AbstractMatrix{T}}
+function BlockDiagonal(blocks::V) where {
+    T, V<:Union{Tuple{Vararg{<:AbstractMatrix{T}}}, AbstractVector{<:AbstractMatrix{T}}}
+}
     return BlockDiagonal{T, V}(blocks)
 end
 
@@ -151,7 +154,9 @@ function _block_indices(B::BlockDiagonal, i::Integer, j::Integer)
         p += 1
         j -= ncols[p]
     end
-    i -= sum(nrows[1:(p-1)])
+    if !isempty(nrows[1:(p-1)])
+        i -= sum(nrows[1:(p-1)])
+    end
     # if row `i` outside of block `p`, set `p` to place-holder value `-1`
     if i <= 0 || i > nrows[p]
         p = -1

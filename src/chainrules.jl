@@ -1,5 +1,5 @@
 # constructor
-function ChainRulesCore.rrule(::Type{<:BlockDiagonal}, blocks::Vector{V}) where {V}
+function ChainRulesCore.rrule(::Type{<:BlockDiagonal}, blocks::V) where {V<:AbstractVector}
     BlockDiagonal_pullback(Δ::Composite) = (NO_FIELDS, Δ.blocks)
     return BlockDiagonal(blocks), BlockDiagonal_pullback
 end
@@ -27,7 +27,7 @@ function ChainRulesCore.rrule(
         ::typeof(*),
         bm::BlockDiagonal{T, V},
         v::StridedVector{T}
-    ) where {T<:Union{Real, Complex}, V<:Matrix{T}}
+    ) where {T<:Union{Real, Complex}, V<:Vector{Matrix{T}}}
 
     y = bm * v
 

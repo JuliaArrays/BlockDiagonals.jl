@@ -8,9 +8,14 @@ using Test
     rng = MersenneTwister(123456)
     N1, N2, N3 = 3, 4, 5
     N = N1 + N2 + N3
-    b1 = BlockDiagonal([rand(rng, N1, N1), rand(rng, N2, N2), rand(rng, N3, N3)])
-    b2 = BlockDiagonal([rand(rng, N1, N1), rand(rng, N3, N3), rand(rng, N2, N2)])
-    b3 = BlockDiagonal([rand(rng, N1, N1), rand(rng, N2, N2), rand(rng, N2, N2)])
+    blocks1 = [rand(rng, N1, N1), rand(rng, N2, N2), rand(rng, N3, N3)]
+    blocks2 = [rand(rng, N1, N1), rand(rng, N3, N3), rand(rng, N2, N2)]
+    blocks3 = [rand(rng, N1, N1), rand(rng, N2, N2), rand(rng, N2, N2)]
+
+    @testset "$T" for (T, (b1, b2, b3)) in (
+        Tuple => (BlockDiagonal(Tuple(blocks1)), BlockDiagonal(Tuple(blocks2)), BlockDiagonal(Tuple(blocks3))),
+        Vector => (BlockDiagonal(blocks1), BlockDiagonal(blocks2), BlockDiagonal(blocks3)),
+    )
     A = rand(rng, N, N + N1)
     B = rand(rng, N + N1, N + N2)
     A′, B′ = A', B'
@@ -143,7 +148,7 @@ using Test
 
         @testset "eigvals on LinearAlgebra types" begin
             # `eigvals` has different methods for different types, e.g. Hermitian
-            b_herm = BlockDiagonal([Hermitian(rand(rng, 3, 3) + I) for _ in 1:3])
+            b_herm = BlockDiagonal(T(Hermitian(rand(rng, 3, 3) + I) for _ in 1:3))
             @test eigvals(b_herm) ≈ eigvals(Matrix(b_herm))
             @test eigvals(b_herm, 1.0, 2.0) ≈ eigvals(Hermitian(Matrix(b_herm)), 1.0, 2.0)
         end
@@ -163,12 +168,12 @@ using Test
               0.0 1.0  5.0
               0.0 0.0  3.0]
 
-        B = BlockDiagonal([X, X])
+        B = BlockDiagonal(T([X, X]))
         C = cholesky(B)
         @test C isa Cholesky{Float64, <:BlockDiagonal{Float64}}
         @test C.U ≈ cholesky(Matrix(B)).U
-        @test C.U ≈ BlockDiagonal([U, U])
-        @test C.L ≈ BlockDiagonal([U', U'])
+        @test C.U ≈ BlockDiagonal(T([U, U]))
+        @test C.L ≈ BlockDiagonal(T([U', U']))
         @test C.UL ≈ C.U
         @test C.uplo === 'U'
         @test C.info == 0
@@ -176,8 +181,8 @@ using Test
         M = BlockDiagonal(map(Matrix, blocks(C.L)))
         C = Cholesky(M, 'L', 0)
         @test C.U ≈ cholesky(Matrix(B)).U
-        @test C.U ≈ BlockDiagonal([U, U])
-        @test C.L ≈ BlockDiagonal([U', U'])
+        @test C.U ≈ BlockDiagonal(T([U, U]))
+        @test C.L ≈ BlockDiagonal(T([U', U']))
         @test C.UL ≈ C.L
         @test C.uplo === 'L'
         @test C.info == 0
@@ -187,7 +192,7 @@ using Test
         X = [  4  12 -16
               12  37 -43
              -16 -43  98]
-        B = BlockDiagonal([X, X])
+        B = BlockDiagonal(T([X, X]))
 
         @testset "full=$full" for full in (true, false)
 
@@ -229,4 +234,5 @@ using Test
             end
         end
     end  # SVD
+end
 end

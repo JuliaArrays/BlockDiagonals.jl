@@ -7,9 +7,14 @@ using Test
     rng = MersenneTwister(123456)
     N1, N2, N3 = 3, 4, 5
     N = N1 + N2 + N3
-    b1 = BlockDiagonal([rand(rng, N1, N1), rand(rng, N2, N2), rand(rng, N3, N3)])
-    b2 = BlockDiagonal([rand(rng, N1, N1), rand(rng, N3, N3), rand(rng, N2, N2)])
-    b3 = BlockDiagonal([rand(rng, N1, N1), rand(rng, N2, N2), rand(rng, N2, N2)])
+    blocks1 = [rand(rng, N1, N1), rand(rng, N2, N2), rand(rng, N3, N3)]
+    blocks2 = [rand(rng, N1, N1), rand(rng, N3, N3), rand(rng, N2, N2)]
+    blocks3 = [rand(rng, N1, N1), rand(rng, N2, N2), rand(rng, N2, N2)]
+
+    @testset "$T" for (T, (b1, b2, b3)) in (
+        Tuple => (BlockDiagonal(Tuple(blocks1)), BlockDiagonal(Tuple(blocks2)), BlockDiagonal(Tuple(blocks3))),
+        Vector => (BlockDiagonal(blocks1), BlockDiagonal(blocks2), BlockDiagonal(blocks3)),
+    )
     A = rand(rng, N, N + N1)
     B = rand(rng, N + N1, N + N2)
     A′, B′ = A', B'
@@ -42,8 +47,10 @@ using Test
         end
 
         @testset "parent" begin
-            @test parent(b1) isa Vector{<:AbstractMatrix}
+            @test parent(b1) isa Union{Tuple,AbstractVector}
+            @test eltype(parent(b1)) <: AbstractMatrix
             @test parent(BlockDiagonal([X, Y])) == [X, Y]
+            @test parent(BlockDiagonal((X, Y))) == (X, Y)
         end
 
         @testset "similar" begin
@@ -116,4 +123,5 @@ using Test
 
         @test_throws DimensionMismatch copy!(b2, b1)
     end
+end
 end

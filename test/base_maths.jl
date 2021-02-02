@@ -7,9 +7,14 @@ using Test
     rng = MersenneTwister(123456)
     N1, N2, N3 = 3, 4, 5
     N = N1 + N2 + N3
-    b1 = BlockDiagonal([rand(rng, N1, N1), rand(rng, N2, N2), rand(rng, N3, N3)])
-    b2 = BlockDiagonal([rand(rng, N1, N1), rand(rng, N3, N3), rand(rng, N2, N2)])
-    b3 = BlockDiagonal([rand(rng, N1, N1), rand(rng, N2, N2), rand(rng, N2, N2)])
+    blocks1 = [rand(rng, N1, N1), rand(rng, N2, N2), rand(rng, N3, N3)]
+    blocks2 = [rand(rng, N1, N1), rand(rng, N3, N3), rand(rng, N2, N2)]
+    blocks3 = [rand(rng, N1, N1), rand(rng, N2, N2), rand(rng, N2, N2)]
+
+    @testset "$T" for (T, (b1, b2, b3)) in (
+        Tuple => (BlockDiagonal(Tuple(blocks1)), BlockDiagonal(Tuple(blocks2)), BlockDiagonal(Tuple(blocks3))),
+        Vector => (BlockDiagonal(blocks1), BlockDiagonal(blocks2), BlockDiagonal(blocks3)),
+    )
     A = rand(rng, N, N + N1)
     B = rand(rng, N + N1, N + N2)
     A′, B′ = A', B'
@@ -127,8 +132,8 @@ using Test
         end
 
         @testset "Non-Square BlockDiagonal * Non-Square BlockDiagonal" begin
-    	    b4 = BlockDiagonal([ones(2, 4), 2 * ones(3, 2)])
-            b5 = BlockDiagonal([3 * ones(2, 2), 2 * ones(4, 1)])
+            b4 = BlockDiagonal(T([ones(2, 4), 2 * ones(3, 2)]))
+            b5 = BlockDiagonal(T([3 * ones(2, 2), 2 * ones(4, 1)]))
 
             @test b4 * b5 isa Array
             @test b4 * b5 == [6 * ones(2, 2) 4 * ones(2, 1); zeros(3, 2) 8 * ones(3, 1)]
@@ -137,4 +142,5 @@ using Test
             @test sum(size.(b5.blocks, 2)) == size(b4 * b5, 2)
         end
     end  # Multiplication
+end
 end
