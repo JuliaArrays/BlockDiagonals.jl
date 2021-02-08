@@ -11,5 +11,6 @@ using LinearAlgebra
     Sys.WORD_SIZE == 64 && doctest(BlockDiagonals)
     include("blockdiagonal.jl")
     include("base_maths.jl")
+    include("chainrules.jl")
     include("linalg.jl")
 end  # tests
