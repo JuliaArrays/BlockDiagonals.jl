@@ -10,6 +10,7 @@ export blocksize, blocksizes, nblocks
 
 include("blockdiagonal.jl")
 include("base_maths.jl")
+include("chainrules.jl")
 include("linalg.jl")
 
 end  # end module

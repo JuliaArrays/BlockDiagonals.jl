@@ -10,7 +10,7 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [compat]
 ChainRulesCore = "0.9"
-ChainRulesTestUtils = "0.5.8"
+ChainRulesTestUtils = "0.6"
 FillArrays = "0.6, 0.7, 0.8, 0.9, 0.10"
 julia = "1"
 
