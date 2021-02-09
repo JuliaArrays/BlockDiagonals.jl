@@ -47,7 +47,7 @@ end
 
 Computes the eigendecomposition for each block separately and keeps the block diagonal 
 structure in the matrix of eigenvectors. Hence any parameters given are applied to each
-eigen decomposition separately, but there is f.e. no global sorting of eigen values.
+eigendecomposition separately, but there is e.g. no global sorting of eigenvalues.
 """
 function eigen_blockwise(B::BlockDiagonal, args...; kwargs...)
     eigens = [eigen(b, args...; kwargs...) for b in blocks(B)]
