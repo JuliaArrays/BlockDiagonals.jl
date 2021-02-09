@@ -77,14 +77,14 @@ using Test
 
                 @static if VERSION < v"1.2"
                     # pre-v1.2 we need to sort the eigenvalues consistently
-                    # Since eigenvalues may be complex here, I use the modulus.
+                    # Since eigenvalues may be complex here, I use this function, which works for this test.
                     # This test is already somewhat fragile w. r. t. degenerate eigenvalues 
                     # and this just makes this a little worse.
-                    perm_bd = sortperm(abs2.(evals_bd))
+                    perm_bd = sortperm(real.(evals_bd) + 100*imag.(evals_bd))
                     evals_bd = evals_bd[perm_bd]
                     evecs_bd = evecs_bd[:, perm_bd]
 
-                    perm = sortperm(abs2.(evals))
+                    perm = sortperm(real.(evals) + 100*imag.(evals))
                     evals = evals[perm]
                     evecs = evecs[:, perm]
                 end
@@ -126,11 +126,11 @@ using Test
 
                     @static if VERSION < v"1.2"
                         # sorting if needed
-                        perm_bd = sortperm(abs2.(evals_bd))
+                        perm_bd = sortperm(real.(evals_bd) + 100*imag.(evals_bd))
                         evals_bd = evals_bd[perm_bd]
                         evecs_bd = evecs_bd[:, perm_bd]
-    
-                        perm = sortperm(abs2.(evals))
+
+                        perm = sortperm(real.(evals) + 100*imag.(evals))
                         evals = evals[perm]
                         evecs = evecs[:, perm]
                     end
