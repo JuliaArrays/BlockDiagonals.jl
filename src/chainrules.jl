@@ -22,3 +22,27 @@ function ChainRulesCore.rrule(::Type{<:Base.Matrix}, B::T) where {T<:BlockDiagon
     return Matrix(B), Matrix_pullback
 end
 
+# multiplication
+function ChainRulesCore.rrule(::typeof(*), bm::BlockDiagonal{T, V}, v::AbstractVector{T}) where {T<:Union{Real, Complex}, V<:AbstractArray{T, 2}}
+    y = bm * v
+
+    # needed for computing Δ * v' blockwise
+    sizes = size.(bm.blocks)
+    high1s = cumsum(first.(sizes))
+    low1s = [1, (1 .+ high1s)...]
+    high2s = cumsum(last.(sizes))
+    low2s = [1, (1 .+ high2s)...]
+
+    function bm_vector_mul_pullback(Δ)
+        return (
+            NO_FIELDS,
+            BlockDiagonal(
+                [
+                    Δ[low1s[i]:high1s[i]] * v[low2s[i]:high2s[i]]' for i in 1:length(sizes)
+                ]
+            ),
+            bm' * Δ,
+        )
+    end
+    return y, bm_vector_mul_pullback
+end
