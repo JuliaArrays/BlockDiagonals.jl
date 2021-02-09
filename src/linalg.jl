@@ -43,30 +43,29 @@ if VERSION < v"1.3.0-DEV.426"
 end
 
 """
-    blockEigen(B::BlockDiagonal, args...; kwargs...) -> Eigen
+    eigen_blockwise(B::BlockDiagonal, args...; kwargs...) -> Eigen
 
-Computes the eigen decomposition for each block separately and keeps the block diagonal 
+Computes the eigendecomposition for each block separately and keeps the block diagonal 
 structure in the matrix of eigenvectors. Hence any parameters given are applied to each
 eigen decomposition separately, but there is f.e. no global sorting of eigen values.
 """
-function blockEigen(B::BlockDiagonal, args...; kwargs...)
+function eigen_blockwise(B::BlockDiagonal, args...; kwargs...)
     eigens = [eigen(b, args...; kwargs...) for b in blocks(B)]
-    #promote to common types
+    # promote to common types to avoid vectors of unclear numerical type
+    # This may happen because eigen is not type stable!
+    # e.g typeof(eigen(randn(2,2))) may yield Eigen{Float64,Float64,Array{Float64,2},Array{Float64,1}}
+    # or Eigen{Complex{Float64},Complex{Float64},Array{Complex{Float64},2},Array{Complex{Float64},1}}
     values = promote([e.values for e in eigens]...)
     vectors = promote([e.vectors for e in eigens]...)
-    Eigen(vcat(values...), BlockDiagonal([vectors...]))
+    vcat(values...), BlockDiagonal([vectors...])
 end 
 
-## This function never keeps the block diagonal structure for type stability.
+## This function never keeps the block diagonal structure
 function LinearAlgebra.eigen(B::BlockDiagonal, args...; kwargs...)
-    values, vectors = blockEigen(B, args...; kwargs...)
-    vectors = Matrix(vectors) # always convert to avoid typestability
+    values, vectors = eigen_blockwise(B, args...; kwargs...)
+    vectors = Matrix(vectors) # always convert to avoid type instability (also it speeds up the permutation step)
     @static if VERSION > v"1.2.0-DEV.275"
-        if haskey(kwargs, :sortby)
-            Eigen(LinearAlgebra.sorteig!(values, vectors,  kwargs[:sortby])...)
-        else
-            Eigen(LinearAlgebra.sorteig!(values, vectors)...)
-        end
+        Eigen(LinearAlgebra.sorteig!(values, vectors, kwargs...)...)
     else 
         Eigen(values, vectors) 
     end

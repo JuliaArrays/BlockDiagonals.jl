@@ -1,5 +1,5 @@
 using BlockDiagonals
-using BlockDiagonals: svd_blockwise
+using BlockDiagonals: svd_blockwise, eigen_blockwise
 using LinearAlgebra
 using Random
 using Test
@@ -53,41 +53,92 @@ using Test
             end
         end
 
-        @testset "eigen decomposition" begin
-            # this hits both eigen(BlockDiagonal) and blockEigen, since the former uses the latter
-            evalsBlock, evecsBlock = eigen(b1)
-            evals, evecs = eigen(Matrix(b1))
-            @static if VERSION < v"1.2"
-                # pre-v1.2 we need to sort the eigenvalus consistently
-                sortPermBlock = sortperm(abs2.(evalsBlock))
-                evalsBlock = evalsBlock[sortPermBlock]
-                evecsBlock = evecsBlock[:, sortPermBlock]
-                sortPerm = sortperm(abs2.(evals))
-                evals = evals[sortPerm]
-                evecs = evecs[:, sortPerm]
-            end
-            @test evalsBlock ≈ evals
-            # comparing vectors is more difficult due to a sign ambiguity
-            # So we try adding and subtracting the vectors, keeping the smallest magnitude for each entry
-            # and compare that with something small.
-            # I performed some tests and the largest deviation I found was ~5e-14
-            @test all(min.(abs.(evecsBlock - evecs), abs.(evecsBlock + evecs)) .< 1e-13)
+        @testset "Symmetric/Hermitian" begin
+            @test Symmetric(b1) == Symmetric(Matrix(b1))
+            @test Symmetric(b1, :L) == Symmetric(Matrix(b1), :L)
+            @test Hermitian(b1) == Hermitian(Matrix(b1))
+            @test Hermitian(b1, :L) == Hermitian(Matrix(b1), :L)
+        end
 
-            # also try for Symmetric matrices
-            evalsBlock, evecsBlock = eigen(Symmetric(b1))
-            evals, evecs = eigen(Symmetric(Matrix(b1)))
-            @static if VERSION < v"1.2"
-                # pre-v1.2 we need to sort the eigenvalus consistently
-                sortPermBlock = sortperm(evalsBlock)
-                evalsBlock = evalsBlock[sortPermBlock]
-                evecsBlock = evecsBlock[:, sortPermBlock]
-                sortPerm = sortperm(evals)
-                evals = evals[sortPerm]
-                evecs = evecs[:, sortPerm]
+        @testset "Eigen Decomposition" begin
+
+            @testset "eigen $name" for (name, B) in [("", b1), ("symmetric", Symmetric(b1)), ("hermitian", Hermitian(b1))]
+                E = eigen(B)
+                evals_bd, evecs_bd = E
+                evals, evecs = eigen(Matrix(B))
+
+                @test E isa Eigen
+                @test Matrix(E) ≈ B 
+
+                # There is no test like @test eigen(B) == eigen(Matrix(B))
+                # 1. this fails in the complex case. Probably a convergence thing that leads to ever so slight differences
+                # 2. pre version 1.2 this can't be expected to hold at all because the order of eigenvalues was random
+                # so I sort the values/vectors (if needed) and then compare them via ≈
+
+                @static if VERSION < v"1.2"
+                    # pre-v1.2 we need to sort the eigenvalues consistently
+                    # Since eigenvalues may be complex here, I use the modulus.
+                    # This test is already somewhat fragile w. r. t. degenerate eigenvalues 
+                    # and this just makes this a little worse.
+                    perm_bd = sortperm(abs2.(evals_bd))
+                    evals_bd = evals_bd[perm_bd]
+                    evecs_bd = evecs_bd[:, perm_bd]
+
+                    perm = sortperm(abs2.(evals))
+                    evals = evals[perm]
+                    evecs = evecs[:, perm]
+                end
+
+                @test evals_bd ≈ evals
+                # comparing vectors is more difficult due to a sign ambiguity
+                # So we try adding and subtracting the vectors, keeping the smallest magnitude for each entry
+                # and compare that with something small.
+                # I performed some tests and the largest deviation I found was ~5e-14
+                @test all(min.(abs.(evecs_bd - evecs), abs.(evecs_bd + evecs)) .< 1e-13)
             end
 
-            @test evalsBlock ≈ evals
-            @test all(min.(abs.(evecsBlock - evecs), abs.(evecsBlock + evecs)) .< 1e-13)
+            @testset "eigen_blockwise $name" for (name, B) in [("", b1), ("symmetric", Symmetric(b1)), ("hermitian", Hermitian(b1))]
+                vals, vecs = eigen_blockwise(B)
+
+                # check types. Eltype varies so not checked here (should be ComplexF64, Float64, Float64)
+                @test vecs isa BlockDiagonal
+                @test vals isa Vector
+
+                # Note: /(Matrix, BlockDiagonal) fails. I think because we can't do factorize(BlockDiagonal)
+                # this is why I convert to Matrix prior to /
+                @test B ≈ vecs * Diagonal(vals) / Matrix(vecs)
+
+                # check by block
+                cumulative_size = 0
+                for (i, block) in enumerate(blocks(B))
+                    block_vals = vals[cumulative_size+1:cumulative_size+size(block,1)]
+                    cumulative_size += size(block, 1)
+                    # adapt eltype to the same to block_vals.
+                    # block_vals's eltype is chosen to be compatible across all eigenvalues, thus it might be different
+                    block = convert.(eltype(block_vals), block)
+
+                    # from here on the code parallel to the test code above
+                    E = Eigen(block_vals, blocks(vecs)[i])
+                    evals_bd, evecs_bd = E
+                    evals, evecs = eigen(block)
+                    
+                    @test block ≈ Matrix(E)
+
+                    @static if VERSION < v"1.2"
+                        # sorting if needed
+                        perm_bd = sortperm(abs2.(evals_bd))
+                        evals_bd = evals_bd[perm_bd]
+                        evecs_bd = evecs_bd[:, perm_bd]
+    
+                        perm = sortperm(abs2.(evals))
+                        evals = evals[perm]
+                        evecs = evecs[:, perm]
+                    end
+    
+                    @test evals_bd ≈ evals
+                    @test all(min.(abs.(evecs_bd - evecs), abs.(evecs_bd + evecs)) .< 1e-13)
+                end
+            end
         end
 
         @testset "eigvals on LinearAlgebra types" begin
