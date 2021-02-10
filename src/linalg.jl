@@ -43,7 +43,7 @@ if VERSION < v"1.3.0-DEV.426"
 end
 
 """
-    eigen_blockwise(B::BlockDiagonal, args...; kwargs...) -> Eigen
+    eigen_blockwise(B::BlockDiagonal, args...; kwargs...) -> values, vectors
 
 Computes the eigendecomposition for each block separately and keeps the block diagonal 
 structure in the matrix of eigenvectors. Hence any parameters given are applied to each
