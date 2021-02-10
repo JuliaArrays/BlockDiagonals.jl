@@ -27,17 +27,20 @@ function ChainRulesCore.rrule(::typeof(*), bm::BlockDiagonal{T, V}, v::AbstractV
     y = bm * v
 
     # needed for computing Δ * v' blockwise
-    sizes = size.(bm.blocks)
-    high1s = cumsum(first.(sizes))
-    low1s = [1, (1 .+ high1s)...]
-    high2s = cumsum(last.(sizes))
-    low2s = [1, (1 .+ high2s)...]
+    nrows = size.(bm.blocks, 1)
+    ncols = size.(bm.blocks, 2)
+    row_idxs = cumsum(nrows) .- nrows .+ 1
+    col_idxs = cumsum(ncols) .- ncols .+ 1
 
     function bm_vector_mul_pullback(Δ)
-        blocks = [Δ[low1s[i]:high1s[i]] * v[low2s[i]:high2s[i]]' for i in 1:length(bm.blocks)]
+        Δblocks = map(eachindex(nrows)) do i
+            block_rows = row_idxs[i]:(row_idxs[i] + nrows[i] - 1)
+            block_cols = col_idxs[i]:(col_idxs[i] + ncols[i] - 1)
+            return Δ[block_rows] * v[block_cols]'
+        end
         return (
             NO_FIELDS,
-            Composite{BlockDiagonal{T, V}}(;blocks),
+            Composite{BlockDiagonal{T, V}}(;blocks=Δblocks),
             bm' * Δ,
         )
     end
