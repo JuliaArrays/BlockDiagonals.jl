@@ -36,7 +36,10 @@ function ChainRulesCore.rrule(::typeof(*), bm::BlockDiagonal{T, V}, v::AbstractV
         Δblocks = map(eachindex(nrows)) do i
             block_rows = row_idxs[i]:(row_idxs[i] + nrows[i] - 1)
             block_cols = col_idxs[i]:(col_idxs[i] + ncols[i] - 1)
-            return Δ[block_rows] * v[block_cols]'
+            return InplaceableThunk(
+                @thunk(Δ[block_rows] * v[block_cols]'),
+                X̄ -> mul!(X̄, Δ[block_rows], v[block_cols]', true, true)
+            )
         end
         return (
             NO_FIELDS,
