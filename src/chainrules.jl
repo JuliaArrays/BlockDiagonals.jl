@@ -34,13 +34,10 @@ function ChainRulesCore.rrule(::typeof(*), bm::BlockDiagonal{T, V}, v::AbstractV
     low2s = [1, (1 .+ high2s)...]
 
     function bm_vector_mul_pullback(Δ)
+        blocks = [Δ[low1s[i]:high1s[i]] * v[low2s[i]:high2s[i]]' for i in 1:length(sizes)]
         return (
             NO_FIELDS,
-            BlockDiagonal(
-                [
-                    Δ[low1s[i]:high1s[i]] * v[low2s[i]:high2s[i]]' for i in 1:length(sizes)
-                ]
-            ),
+            Composite{BlockDiagonal{T, V}}(;blocks),
             bm' * Δ,
         )
     end
