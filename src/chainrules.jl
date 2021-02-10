@@ -41,7 +41,10 @@ function ChainRulesCore.rrule(::typeof(*), bm::BlockDiagonal{T, V}, v::AbstractV
         return (
             NO_FIELDS,
             Composite{BlockDiagonal{T, V}}(;blocks=Δblocks),
-            bm' * Δ,
+            InplaceableThunk(
+                @thunk(bm' * Δ),
+                X̄ -> mul!(X̄, bm', Δ, true, true)
+            ),
         )
     end
     return y, bm_vector_mul_pullback
