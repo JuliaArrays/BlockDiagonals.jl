@@ -23,7 +23,12 @@ function ChainRulesCore.rrule(::Type{<:Base.Matrix}, B::T) where {T<:BlockDiagon
 end
 
 # multiplication
-function ChainRulesCore.rrule(::typeof(*), bm::BlockDiagonal{T, V}, v::AbstractVector{T}) where {T<:Union{Real, Complex}, V<:AbstractArray{T, 2}}
+function ChainRulesCore.rrule(
+        ::typeof(*),
+        bm::BlockDiagonal{T, V},
+        v::StridedVector{T}
+    ) where {T<:Union{Real, Complex}, V<:Matrix{T}}
+
     y = bm * v
 
     # needed for computing Δ * v' blockwise
