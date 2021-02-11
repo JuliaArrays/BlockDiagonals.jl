@@ -9,6 +9,10 @@ LinearAlgebra.det(B::BlockDiagonal) = prod(det, blocks(B))
 LinearAlgebra.logdet(B::BlockDiagonal) = sum(logdet, blocks(B))
 LinearAlgebra.tr(B::BlockDiagonal) = sum(tr, blocks(B))
 
+for f in (:Symmetric, :Hermitian)
+    @eval LinearAlgebra.$f(B::BlockDiagonal, uplo::Symbol=:U) = BlockDiagonal([$f(block, uplo) for block in blocks(B)])
+end
+
 # Real matrices can have Complex eigenvalues; `eigvals` is not type stable.
 @static if VERSION < v"1.2.0-DEV.275"
     # No convention for sorting complex eigenvalues in earlier versions of Julia.
@@ -37,6 +41,36 @@ if VERSION < v"1.3.0-DEV.426"
         return maximum(v)
     end
 end
+
+"""
+    eigen_blockwise(B::BlockDiagonal, args...; kwargs...) -> values, vectors
+
+Computes the eigendecomposition for each block separately and keeps the block diagonal 
+structure in the matrix of eigenvectors. Hence any parameters given are applied to each
+eigendecomposition separately, but there is e.g. no global sorting of eigenvalues.
+"""
+function eigen_blockwise(B::BlockDiagonal, args...; kwargs...)
+    eigens = [eigen(b, args...; kwargs...) for b in blocks(B)]
+    # promote to common types to avoid vectors of unclear numerical type
+    # This may happen because eigen is not type stable!
+    # e.g typeof(eigen(randn(2,2))) may yield Eigen{Float64,Float64,Array{Float64,2},Array{Float64,1}}
+    # or Eigen{Complex{Float64},Complex{Float64},Array{Complex{Float64},2},Array{Complex{Float64},1}}
+    values = promote([e.values for e in eigens]...)
+    vectors = promote([e.vectors for e in eigens]...)
+    vcat(values...), BlockDiagonal([vectors...])
+end 
+
+## This function never keeps the block diagonal structure
+function LinearAlgebra.eigen(B::BlockDiagonal, args...; kwargs...)
+    values, vectors = eigen_blockwise(B, args...; kwargs...)
+    vectors = Matrix(vectors) # always convert to avoid type instability (also it speeds up the permutation step)
+    @static if VERSION > v"1.2.0-DEV.275"
+        Eigen(LinearAlgebra.sorteig!(values, vectors, kwargs...)...)
+    else 
+        Eigen(values, vectors) 
+    end
+end
+
 
 svdvals_blockwise(B::BlockDiagonal) = mapreduce(svdvals, vcat, blocks(B))
 LinearAlgebra.svdvals(B::BlockDiagonal) = sort!(svdvals_blockwise(B); rev=true)
