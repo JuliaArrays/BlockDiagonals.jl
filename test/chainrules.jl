@@ -8,4 +8,10 @@
         D = BlockDiagonal([randn(1, 2), randn(2, 2)])
         test_rrule(Matrix, D)
     end
+
+    @testset "BlockDiagonal * Vector" begin
+        D = BlockDiagonal([rand(2, 3), rand(3, 3)])
+        v = rand(6)
+        test_rrule(*, D, v)
+    end
 end

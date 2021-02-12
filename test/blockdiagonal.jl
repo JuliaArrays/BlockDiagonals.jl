@@ -3,12 +3,6 @@ using BlockDiagonals: isequal_blocksizes
 using Random
 using Test
 
-function FiniteDifferences.to_vec(X::BlockDiagonal)
-    x, blocks_from_vec = to_vec(X.blocks)
-    BlockDiagonal_from_vec(x_vec) = BlockDiagonal(blocks_from_vec(x_vec))
-    return x, BlockDiagonal_from_vec
-end
-
 @testset "blockdiagonal.jl" begin
     rng = MersenneTwister(123456)
     N1, N2, N3 = 3, 4, 5
