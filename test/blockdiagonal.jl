@@ -11,18 +11,14 @@ using Test
     blocks2 = [rand(rng, N1, N1), rand(rng, N3, N3), rand(rng, N2, N2)]
     blocks3 = [rand(rng, N1, N1), rand(rng, N2, N2), rand(rng, N2, N2)]
 
-    @testset "$T" for (T, (b1, b2, b3)) in (
-        Tuple => (BlockDiagonal(Tuple(blocks1)), BlockDiagonal(Tuple(blocks2)), BlockDiagonal(Tuple(blocks3))),
-        Vector => (BlockDiagonal(blocks1), BlockDiagonal(blocks2), BlockDiagonal(blocks3)),
-    )
-    A = rand(rng, N, N + N1)
-    B = rand(rng, N + N1, N + N2)
-    A′, B′ = A', B'
-    a = rand(rng, N)
-    b = rand(rng, N + N1)
+    @testset for V in (Tuple, Vector)
+    b1 = BlockDiagonal(V(blocks1))
+    b2 = BlockDiagonal(V(blocks2))
+    N = size(b1, 1)
 
     @testset "AbstractArray" begin
-        X = rand(2, 2); Y = rand(3, 3)
+        X = rand(2, 2)
+        Y = rand(3, 3)
 
         @test size(b1) == (N, N)
         @test size(b1, 1) == N && size(b1, 2) == N
@@ -47,7 +43,7 @@ using Test
         end
 
         @testset "parent" begin
-            @test parent(b1) isa Union{Tuple,AbstractVector}
+            @test parent(b1) isa V
             @test eltype(parent(b1)) <: AbstractMatrix
             @test parent(BlockDiagonal([X, Y])) == [X, Y]
             @test parent(BlockDiagonal((X, Y))) == (X, Y)
@@ -60,7 +56,7 @@ using Test
         end
 
         @testset "setindex!" begin
-            X = BlockDiagonal([rand(Float32, 5, 5), rand(Float32, 3, 3)])
+            X = BlockDiagonal(V([rand(Float32, 5, 5), rand(Float32, 3, 3)]))
             X[10] = Int(10)
             @test X[10] === Float32(10.0)
             X[3, 3] = Int(9)
@@ -77,9 +73,9 @@ using Test
     end
 
     @testset "blocks size" begin
-        B = BlockDiagonal([rand(3, 3), rand(4, 4)])
+        B = BlockDiagonal(V([rand(3, 3), rand(4, 4)]))
         @test nblocks(B) == 2
-        @test blocksizes(B) == [(3, 3), (4, 4)]
+        @test blocksizes(B) == V([(3, 3), (4, 4)])
         @test blocksize(B, 2) == blocksizes(B)[2] == blocksize(B, 2, 2)
     end
 
@@ -101,15 +97,15 @@ using Test
     end  # Equality
 
     @testset "Non-Square Matrix" begin
-	A1 = ones(2, 4)
-	A2 = 2 * ones(3, 2)
-	B1 = BlockDiagonal([A1, A2])
+        A1 = ones(2, 4)
+        A2 = 2 * ones(3, 2)
+        B1 = BlockDiagonal(V([A1, A2]))
         B2 = [A1 zeros(2, 2); zeros(3, 4) A2]
 
-	@test B1 == B2
-	# Dimension check
-	@test sum(size.(B1.blocks, 1)) == size(B2, 1)
-	@test sum(size.(B1.blocks, 2)) == size(B2, 2)
+        @test B1 == B2
+        # Dimension check
+        @test sum(size.(B1.blocks, 1)) == size(B2, 1)
+        @test sum(size.(B1.blocks, 2)) == size(B2, 2)
     end  # Non-Square Matrix
 
     @testset "copy" begin
