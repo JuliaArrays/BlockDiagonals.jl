@@ -5,38 +5,31 @@ using Test
 
 @testset "base_maths.jl" begin
     rng = MersenneTwister(123456)
-    N1, N2, N3 = 3, 4, 5
-    N = N1 + N2 + N3
-    blocks1 = [rand(rng, N1, N1), rand(rng, N2, N2), rand(rng, N3, N3)]
-    blocks2 = [rand(rng, N1, N1), rand(rng, N3, N3), rand(rng, N2, N2)]
-    blocks3 = [rand(rng, N1, N1), rand(rng, N2, N2), rand(rng, N2, N2)]
+    blocks1 = [rand(rng, 3, 3), rand(rng, 4, 4)]
+    blocks2 = [rand(rng, 3, 3), rand(rng, 5, 5)]
 
-    @testset "$T" for (T, (b1, b2, b3)) in (
-        Tuple => (BlockDiagonal(Tuple(blocks1)), BlockDiagonal(Tuple(blocks2)), BlockDiagonal(Tuple(blocks3))),
-        Vector => (BlockDiagonal(blocks1), BlockDiagonal(blocks2), BlockDiagonal(blocks3)),
-    )
-    A = rand(rng, N, N + N1)
-    B = rand(rng, N + N1, N + N2)
-    A′, B′ = A', B'
-    a = rand(rng, N)
-    b = rand(rng, N + N1)
+    @testset for V in (Tuple, Vector)
+    b1 = BlockDiagonal(V(blocks1))
+    b2 = BlockDiagonal(V(blocks2))
+    N = size(b1, 1)
+    A = rand(rng, N, N + 1)
 
     @testset "Addition" begin
         @testset "BlockDiagonal + BlockDiagonal" begin
             @test b1 + b1 isa BlockDiagonal
             @test Matrix(b1 + b1) == Matrix(b1) + Matrix(b1)
-            @test_throws DimensionMismatch b1 + b3
+            @test_throws DimensionMismatch b1 + b2
         end
 
         @testset "BlockDiagonal + Matrix" begin
             @test b1 + Matrix(b1) isa Matrix
             @test b1 + Matrix(b1) == b1 + b1
-            @test_throws DimensionMismatch b1 + Matrix(b3)
+            @test_throws DimensionMismatch b1 + Matrix(b2)
 
             # Matrix + BlockDiagonal
             @test Matrix(b1) + b1 isa Matrix
             @test Matrix(b1) + b1 == b1 + b1
-            @test_throws DimensionMismatch Matrix(b1) + b3
+            @test_throws DimensionMismatch Matrix(b1) + b2
 
             # If the AbstractMatrix is diagonal, we should return a BlockDiagonal.
             # Test the StridedMatrix method.
@@ -50,7 +43,7 @@ using Test
 
         @testset "BlockDiagonal + Diagonal" begin
             D = Diagonal(randn(rng, N))
-            D′ = Diagonal(randn(rng, N + N1))
+            D′ = Diagonal(randn(rng, N + 1))
 
             @test b1 + D isa BlockDiagonal
             @test b1 + D == Matrix(b1) + D
@@ -73,11 +66,10 @@ using Test
     end  # Addition
 
     @testset "Multiplication" begin
-
         @testset "BlockDiagonal * BlockDiagonal" begin
             @test b1 * b1 isa BlockDiagonal
             @test Matrix(b1 * b1) ≈ Matrix(b1) * Matrix(b1)
-            @test_throws DimensionMismatch b3 * b1
+            @test_throws DimensionMismatch b2 * b1
         end
 
         @testset "BlockDiagonal * Number" begin
@@ -88,11 +80,14 @@ using Test
         end
 
         @testset "BlockDiagonal * Vector" begin
+            a = rand(rng, N)
             @test b1 * a isa Vector
             @test b1 * a ≈ Matrix(b1) * a
+            b = rand(rng, N + 1)
             @test_throws DimensionMismatch b1 * b
         end
         @testset "Vector^T * BlockDiagonal" begin
+            a = rand(rng, N)
             @test a' * b1 isa Adjoint{<:Number, <:Vector}
             @test transpose(a) * b1 isa Transpose{<:Number, <:Vector}
             @test a' * b1 ≈ a' * Matrix(b1)
@@ -102,11 +97,13 @@ using Test
         @testset "BlockDiagonal * Matrix" begin
             @test b1 * A isa Matrix
             @test b1 * A ≈ Matrix(b1) * A
+
+            B = rand(rng, N + 1, N)
             @test_throws DimensionMismatch b1 * B
 
             # Matrix * BlockDiagonal
-            @test A′ * b1 isa Matrix
-            @test A′ * b1 ≈ A′ * Matrix(b1)
+            @test A' * b1 isa Matrix
+            @test A' * b1 ≈ A' * Matrix(b1)
             @test_throws DimensionMismatch A * b1
 
             # degenerate cases
@@ -119,7 +116,7 @@ using Test
 
         @testset "BlockDiagonal * Diagonal" begin
             D = Diagonal(randn(rng, N))
-            D′ = Diagonal(randn(rng, N + N1))
+            D′ = Diagonal(randn(rng, N + 1))
 
             @test b1 * D isa BlockDiagonal
             @test b1 * D ≈ Matrix(b1) * D
@@ -132,8 +129,8 @@ using Test
         end
 
         @testset "Non-Square BlockDiagonal * Non-Square BlockDiagonal" begin
-            b4 = BlockDiagonal(T([ones(2, 4), 2 * ones(3, 2)]))
-            b5 = BlockDiagonal(T([3 * ones(2, 2), 2 * ones(4, 1)]))
+            b4 = BlockDiagonal(V([ones(2, 4), 2 * ones(3, 2)]))
+            b5 = BlockDiagonal(V([3 * ones(2, 2), 2 * ones(4, 1)]))
 
             @test b4 * b5 isa Array
             @test b4 * b5 == [6 * ones(2, 2) 4 * ones(2, 1); zeros(3, 2) 8 * ones(3, 1)]
@@ -142,5 +139,5 @@ using Test
             @test sum(size.(b5.blocks, 2)) == size(b4 * b5, 2)
         end
     end  # Multiplication
-end
+end  # V
 end
