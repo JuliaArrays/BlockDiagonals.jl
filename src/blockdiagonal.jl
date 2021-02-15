@@ -25,7 +25,7 @@ BlockDiagonal(B::BlockDiagonal) = B
 is_square(A::AbstractMatrix) = size(A, 1) == size(A, 2)
 
 """
-    blocks(B::BlockDiagonal{T, V}) -> Vector{V}
+    blocks(B::BlockDiagonal{T, V}) -> V
 
 Return the on-diagonal blocks of B.
 """
@@ -33,7 +33,7 @@ blocks(B::BlockDiagonal) = B.blocks
 
 # BlockArrays-like functions
 """
-    blocksizes(B::BlockDiagonal) -> Vector{Tuple}
+    blocksizes(B::BlockDiagonal{T, V}) -> V
 
 Return the size of each on-diagonal block in order.
 
