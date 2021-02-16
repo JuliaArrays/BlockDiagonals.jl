@@ -66,6 +66,14 @@ using Test
             @test 5I + b1 == 5I + Matrix(b1)
         end
     end  # Addition
+    
+    @testset "Subtraction" begin
+        @test -b1 isa BlockDiagonal
+        @test b1 - b1 isa BlockDiagonal
+        
+        @test -b1 == -Matrix(b1)
+        @test b1 - b1 == Matrix(b1) - Matrix(b1)
+    end
 
     @testset "Multiplication" begin
 
