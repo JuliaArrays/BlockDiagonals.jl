@@ -69,7 +69,7 @@ using Test
     
     @testset "Subtraction" begin
         @test -b1 isa BlockDiagonal
-        @test b1 - b4 isa BlockDiagonal
+        @test b1 - b1 isa BlockDiagonal
         
         @test -b1 == -Matrix(b1)
         @test b1 - b4 == Matrix(b1) - Matrix(b4)        
