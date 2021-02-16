@@ -63,7 +63,7 @@ function Base.:+(B::BlockDiagonal, M::UniformScaling)
     return BlockDiagonal([block + M for block in blocks(B)])
 end
 
-##Subtraction
+## Subtraction
 Base.:-(B::BlockDiagonal) = BlockDiagonal(.-(blocks(B)))
 Base.:-(M::AbstractMatrix, B::BlockDiagonal) =  M + -B
 
