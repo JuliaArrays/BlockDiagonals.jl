@@ -10,6 +10,7 @@ using Test
     b1 = BlockDiagonal([rand(rng, N1, N1), rand(rng, N2, N2), rand(rng, N3, N3)])
     b2 = BlockDiagonal([rand(rng, N1, N1), rand(rng, N3, N3), rand(rng, N2, N2)])
     b3 = BlockDiagonal([rand(rng, N1, N1), rand(rng, N2, N2), rand(rng, N2, N2)])
+    b4 = BlockDiagonal([rand(rng, N1, N1), rand(rng, N2, N2), rand(rng, N3, N3)])
     A = rand(rng, N, N + N1)
     B = rand(rng, N + N1, N + N2)
     A′, B′ = A', B'
@@ -66,6 +67,14 @@ using Test
             @test 5I + b1 == 5I + Matrix(b1)
         end
     end  # Addition
+    
+    @testset "Subtraction" begin
+        @test -b1 isa BlockDiagonal
+        @test b1 - b4 isa BlockDiagonal
+        
+        @test -b1 == -Matrix(b1)
+        @test b1 - b4 == Matrix(b1) - Matrix(b4)        
+    end
 
     @testset "Multiplication" begin
 
