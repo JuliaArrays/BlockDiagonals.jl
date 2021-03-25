@@ -9,6 +9,7 @@ makedocs(;
     repo="https://github.com/invenia/BlockDiagonals.jl/blob/{commit}{path}#L{line}",
     sitename="BlockDiagonals.jl",
     authors="Invenia Technical Computing",
+    strict=true,
 )
 
 deploydocs(;
