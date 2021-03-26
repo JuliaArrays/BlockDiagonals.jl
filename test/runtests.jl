@@ -7,8 +7,8 @@ using Test
 using LinearAlgebra
 
 @testset "BlockDiagonals" begin
-    # The doctests fail on x86, so only run them on 64-bit hardware
-    Sys.WORD_SIZE == 64 && doctest(BlockDiagonals)
+    # The doctests fail version other than 64bit julia 1.6.x, due to printing differences
+    Sys.WORD_SIZE == 64 && v"1.6" <= VERSION < v"1.7" && doctest(BlockDiagonals)
     include("blockdiagonal.jl")
     include("base_maths.jl")
     include("chainrules.jl")

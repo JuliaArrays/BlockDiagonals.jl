@@ -39,7 +39,7 @@ Return the size of each on-diagonal block in order.
 julia> B = BlockDiagonal([rand(2, 2), rand(3, 3)]);
 
 julia> blocksizes(B)
-2-element Array{Tuple{Int64,Int64},1}:
+2-element Vector{Tuple{Int64, Int64}}:
  (2, 2)
  (3, 3)
 ```
