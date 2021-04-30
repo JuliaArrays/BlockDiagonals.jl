@@ -12,6 +12,5 @@ using LinearAlgebra
     include("blockdiagonal.jl")
     include("base_maths.jl")
     include("chainrules.jl")
-    include("finitedifferences.jl")
     include("linalg.jl")
 end  # tests
