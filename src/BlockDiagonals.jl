@@ -13,6 +13,5 @@ include("blockdiagonal.jl")
 include("base_maths.jl")
 include("chainrules.jl")
 include("linalg.jl")
-include("finitedifferences.jl")
 
 end  # end module
