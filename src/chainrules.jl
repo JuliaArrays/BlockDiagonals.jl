@@ -1,6 +1,6 @@
 # constructor
 function ChainRulesCore.rrule(::Type{<:BlockDiagonal}, blocks::Vector{V}) where {V}
-    BlockDiagonal_pullback(Δ::Composite) = (NO_FIELDS, Δ.blocks)
+    BlockDiagonal_pullback(Δ::Tangent) = (NoTangent(), Δ.blocks)
     return BlockDiagonal(blocks), BlockDiagonal_pullback
 end
 
@@ -17,7 +17,7 @@ function ChainRulesCore.rrule(::Type{<:Base.Matrix}, B::T) where {T<:BlockDiagon
             block_cols = col_idxs[n]:(col_idxs[n] + ncols[n] - 1)
             return Δ[block_rows, block_cols]
         end
-        return (NO_FIELDS, Composite{T}(blocks=Δblocks))
+        return (NoTangent(), Tangent{T}(blocks=Δblocks))
     end
     return Matrix(B), Matrix_pullback
 end
@@ -47,8 +47,8 @@ function ChainRulesCore.rrule(
             )
         end
         return (
-            NO_FIELDS,
-            Composite{BlockDiagonal{T, V}}(;blocks=Δblocks),
+            NoTangent(),
+            Tangent{BlockDiagonal{T, V}}(;blocks=Δblocks),
             InplaceableThunk(
                 @thunk(bm' * Δ),
                 X̄ -> mul!(X̄, bm', Δ, true, true)
