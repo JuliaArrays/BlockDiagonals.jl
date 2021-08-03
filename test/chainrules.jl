@@ -2,6 +2,7 @@
     @testset "BlockDiagonal" begin
         x = [randn(1, 2), randn(2, 2)]
         test_rrule(BlockDiagonal, x)
+        test_rrule(BlockDiagonal, x; output_tangent=Tangent{BlockDiagonal}(;blocks=x))
     end
 
     @testset "Matrix" begin

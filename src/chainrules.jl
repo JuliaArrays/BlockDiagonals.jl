@@ -1,6 +1,7 @@
 # constructor
 _BlockDiagonal_pullback(Δ::Tangent) = (NoTangent(), Δ.blocks)
 _BlockDiagonal_pullback(Δ::AbstractThunk) = _BlockDiagonal_pullback(unthunk(Δ))
+_BlockDiagonal_pullback(Δ::BlockDiagonal) = (NoTangent(), Δ.blocks)
 function ChainRulesCore.rrule(::Type{<:BlockDiagonal}, blocks::Vector{V}) where {V}
     return BlockDiagonal(blocks), _BlockDiagonal_pullback
 end
