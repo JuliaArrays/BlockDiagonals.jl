@@ -6,6 +6,8 @@ using FillArrays: Zeros
 using FiniteDifferences
 using LinearAlgebra
 
+import ChainRulesCore.ProjectTo
+
 export BlockDiagonal, blocks
 export blocksize, blocksizes, nblocks
 

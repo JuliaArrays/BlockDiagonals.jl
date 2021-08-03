@@ -1,6 +1,7 @@
 # constructor
 _BlockDiagonal_pullback(Δ::Tangent) = (NoTangent(), Δ.blocks)
 _BlockDiagonal_pullback(Δ::AbstractThunk) = _BlockDiagonal_pullback(unthunk(Δ))
+_BlockDiagonal_pullback(Δ::BlockDiagonal) = (NoTangent(), Δ.blocks)
 function ChainRulesCore.rrule(::Type{<:BlockDiagonal}, blocks::Vector{V}) where {V}
     return BlockDiagonal(blocks), _BlockDiagonal_pullback
 end
@@ -48,14 +49,34 @@ function ChainRulesCore.rrule(
             block_rows = row_idxs[i]:(row_idxs[i] + nrows[i] - 1)
             block_cols = col_idxs[i]:(col_idxs[i] + ncols[i] - 1)
             return InplaceableThunk(
+                X̄ -> mul!(X̄, ȳ[block_rows], v[block_cols]', true, true),
                 @thunk(ȳ[block_rows] * v[block_cols]'),
-                X̄ -> mul!(X̄, ȳ[block_rows], v[block_cols]', true, true)
             )
         end
 
         b̄m = Tangent{BlockDiagonal{T, V}}(;blocks=Δblocks)
-        v̄ = InplaceableThunk(@thunk(bm' * ȳ), X̄ -> mul!(X̄, bm', ȳ, true, true))
+        v̄ = InplaceableThunk(X̄ -> mul!(X̄, bm', ȳ, true, true), @thunk(bm' * ȳ))
         return NoTangent(), b̄m, v̄
     end
     return y, bm_vector_mul_pullback
+end
+
+function ProjectTo(b::BlockDiagonal)
+    blocks = map(ProjectTo, b.blocks)
+    return ProjectTo{BlockDiagonal}(; blocks=blocks, blocksizes=blocksizes(b))
+end
+
+function (project::ProjectTo{BlockDiagonal})(dx)
+    # prepare to index into the dense array
+    nrows = first.(project.blocksizes)
+    ncols = last.(project.blocksizes)
+    row_idxs = cumsum(nrows) .- nrows .+ 1
+    col_idxs = cumsum(ncols) .- ncols .+ 1
+    # project each block individually
+    blocks = map(eachindex(nrows)) do i
+        block_rows = row_idxs[i]:(row_idxs[i] + nrows[i] - 1)
+        block_cols = col_idxs[i]:(col_idxs[i] + ncols[i] - 1)
+        project.blocks[i](dx[block_rows, block_cols])
+    end
+    return BlockDiagonal(blocks)
 end
