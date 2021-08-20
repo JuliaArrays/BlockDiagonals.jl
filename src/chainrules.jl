@@ -4,7 +4,10 @@ function _BlockDiagonal_pullback(Δ::AbstractThunk, project)
     _BlockDiagonal_pullback(unthunk(Δ), project)
 end
 _BlockDiagonal_pullback(Δ::BlockDiagonal, project) = (NoTangent(), Δ.blocks)
-_BlockDiagonal_pullback(Δ::Matrix, project) = _BlockDiagonal_pullback(project(Δ), project)
+function _BlockDiagonal_pullback(Δ::Matrix, project)
+    _BlockDiagonal_pullback(project(Δ), project) # TODO AbstractArray
+end
+
 function ChainRulesCore.rrule(::Type{<:BlockDiagonal}, blocks::Vector{V}) where {V}
     y = BlockDiagonal(blocks)
     project = ProjectTo(y)

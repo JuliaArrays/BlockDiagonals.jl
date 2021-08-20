@@ -2,7 +2,6 @@
     @testset "BlockDiagonal" begin
         x = [randn(1, 2), randn(2, 2)]
         test_rrule(BlockDiagonal, x; check_inferred=false)
-        test_rrule(BlockDiagonal, x; output_tangent=Tangent{BlockDiagonal}(;blocks=x), check_inferred=false)
     end
 
     @testset "Matrix" begin
