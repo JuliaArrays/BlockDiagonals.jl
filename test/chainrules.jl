@@ -1,13 +1,17 @@
 @testset "chainrules.jl" begin
     @testset "BlockDiagonal" begin
         x = [randn(1, 2), randn(2, 2)]
-        test_rrule(BlockDiagonal, x)
-        test_rrule(BlockDiagonal, x; output_tangent=Tangent{BlockDiagonal}(;blocks=x))
+        test_rrule(BlockDiagonal, x; check_inferred=false)
+        test_rrule(BlockDiagonal, x; output_tangent=Tangent{BlockDiagonal}(;blocks=x), check_inferred=false)
     end
 
     @testset "Matrix" begin
         D = BlockDiagonal([randn(1, 2), randn(2, 2)])
         test_rrule(Matrix, D)
+        D_dense = collect(D) + reverse(collect(D), dims=2)
+        @test BlockDiagonals._BlockDiagonal_pullback(D, ProjectTo(D)) ==
+            BlockDiagonals._BlockDiagonal_pullback(D_dense, ProjectTo(D))
+
     end
 
     @testset "BlockDiagonal * Vector" begin

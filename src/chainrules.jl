@@ -1,5 +1,8 @@
 # # constructor
-_BlockDiagonal_pullback(Δ::AbstractThunk, project) = _BlockDiagonal_pullback(unthunk(Δ))
+_BlockDiagonal_pullback(Δ::Tangent, project) = (NoTangent(), Δ.blocks)
+function _BlockDiagonal_pullback(Δ::AbstractThunk, project)
+    _BlockDiagonal_pullback(unthunk(Δ), project)
+end
 _BlockDiagonal_pullback(Δ::BlockDiagonal, project) = (NoTangent(), Δ.blocks)
 _BlockDiagonal_pullback(Δ::Matrix, project) = _BlockDiagonal_pullback(project(Δ), project)
 function ChainRulesCore.rrule(::Type{<:BlockDiagonal}, blocks::Vector{V}) where {V}
