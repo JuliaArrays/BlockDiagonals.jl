@@ -5,7 +5,7 @@ _BlockDiagonal_pullback(Δ::BlockDiagonal) = (NoTangent(), Δ.blocks)
 _BlockDiagonal_pullback(Δ::Matrix, project) = (NoTangent(), project(Δ))
 function ChainRulesCore.rrule(::Type{<:BlockDiagonal}, blocks::Vector{V}) where {V}
     y = BlockDiagonal(blocks)
-    project = ProjectTo(y)
+    project = ProjectTo(y')
     BlockDiagonal_pullback(Δ) = _BlockDiagonal_pullback(Δ, project)
     return y, BlockDiagonal_pullback
 end
