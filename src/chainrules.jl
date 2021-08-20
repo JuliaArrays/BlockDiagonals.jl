@@ -2,8 +2,12 @@
 _BlockDiagonal_pullback(Δ::Tangent) = (NoTangent(), Δ.blocks)
 _BlockDiagonal_pullback(Δ::AbstractThunk) = _BlockDiagonal_pullback(unthunk(Δ))
 _BlockDiagonal_pullback(Δ::BlockDiagonal) = (NoTangent(), Δ.blocks)
+_BlockDiagonal_pullback(Δ::Matrix, project) = (NoTangent(), project(Δ))
 function ChainRulesCore.rrule(::Type{<:BlockDiagonal}, blocks::Vector{V}) where {V}
-    return BlockDiagonal(blocks), _BlockDiagonal_pullback
+    y = BlockDiagonal(blocks)
+    project = ProjectTo(y)
+    BlockDiagonal_pullback(Δ) = _BlockDiagonal_pullback(Δ, project)
+    return y, BlockDiagonal_pullback
 end
 
 # densification
