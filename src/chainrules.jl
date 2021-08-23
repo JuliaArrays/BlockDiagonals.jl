@@ -16,13 +16,12 @@ function _BlockDiagonal_pullback(Δ::AbstractArray, nrows, ncols)
 end
 
 function ChainRulesCore.rrule(::Type{<:BlockDiagonal}, blocks::Vector{V}) where {V}
-    y = BlockDiagonal(blocks)
     nrows = size.(blocks, 1)
     ncols = size.(blocks, 2)
     function BlockDiagonal_pullback(Δ)
         return _BlockDiagonal_pullback(Δ, nrows, ncols)
     end
-    return y, BlockDiagonal_pullback
+    return BlockDiagonal(blocks), BlockDiagonal_pullback
 end
 
 # densification
