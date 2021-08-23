@@ -1,17 +1,27 @@
 # # constructor
-_BlockDiagonal_pullback(Δ::Tangent, project) = (NoTangent(), Δ.blocks)
-function _BlockDiagonal_pullback(Δ::AbstractThunk, project)
-    _BlockDiagonal_pullback(unthunk(Δ), project)
+_BlockDiagonal_pullback(Δ::Tangent, nrows, ncols) = (NoTangent(), Δ.blocks)
+_BlockDiagonal_pullback(Δ::BlockDiagonal, nrows, ncols) = (NoTangent(), Δ.blocks)
+function _BlockDiagonal_pullback(Δ::AbstractThunk, nrows, ncols)
+    _BlockDiagonal_pullback(unthunk(Δ), nrows, ncols)
 end
-_BlockDiagonal_pullback(Δ::BlockDiagonal, project) = (NoTangent(), Δ.blocks)
-function _BlockDiagonal_pullback(Δ::Matrix, project)
-    _BlockDiagonal_pullback(project(Δ), project) # TODO AbstractArray
+function _BlockDiagonal_pullback(Δ::AbstractArray, nrows, ncols)
+    row_idxs = cumsum(nrows) .- nrows .+ 1
+    col_idxs = cumsum(ncols) .- ncols .+ 1
+    Δblocks = map(eachindex(nrows)) do n
+        block_rows = row_idxs[n]:(row_idxs[n] + nrows[n] - 1)
+        block_cols = col_idxs[n]:(col_idxs[n] + ncols[n] - 1)
+        return Δ[block_rows, block_cols]
+    end
+    return NoTangent(), Δblocks
 end
 
 function ChainRulesCore.rrule(::Type{<:BlockDiagonal}, blocks::Vector{V}) where {V}
     y = BlockDiagonal(blocks)
-    project = ProjectTo(y)
-    BlockDiagonal_pullback(Δ) = _BlockDiagonal_pullback(Δ, project)
+    nrows = size.(blocks, 1)
+    ncols = size.(blocks, 2)
+    function BlockDiagonal_pullback(Δ)
+        return _BlockDiagonal_pullback(Δ, nrows, ncols)
+    end
     return y, BlockDiagonal_pullback
 end
 
