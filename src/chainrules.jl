@@ -1,9 +1,27 @@
-# constructor
-_BlockDiagonal_pullback(Δ::Tangent) = (NoTangent(), Δ.blocks)
-_BlockDiagonal_pullback(Δ::AbstractThunk) = _BlockDiagonal_pullback(unthunk(Δ))
-_BlockDiagonal_pullback(Δ::BlockDiagonal) = (NoTangent(), Δ.blocks)
+# # constructor
+_BlockDiagonal_pullback(Δ::Tangent, nrows, ncols) = (NoTangent(), Δ.blocks)
+_BlockDiagonal_pullback(Δ::BlockDiagonal, nrows, ncols) = (NoTangent(), Δ.blocks)
+function _BlockDiagonal_pullback(Δ::AbstractThunk, nrows, ncols)
+    _BlockDiagonal_pullback(unthunk(Δ), nrows, ncols)
+end
+function _BlockDiagonal_pullback(Δ::AbstractArray, nrows, ncols)
+    row_idxs = cumsum(nrows) .- nrows .+ 1
+    col_idxs = cumsum(ncols) .- ncols .+ 1
+    Δblocks = map(eachindex(nrows)) do n
+        block_rows = row_idxs[n]:(row_idxs[n] + nrows[n] - 1)
+        block_cols = col_idxs[n]:(col_idxs[n] + ncols[n] - 1)
+        return Δ[block_rows, block_cols]
+    end
+    return NoTangent(), Δblocks
+end
+
 function ChainRulesCore.rrule(::Type{<:BlockDiagonal}, blocks::Vector{V}) where {V}
-    return BlockDiagonal(blocks), _BlockDiagonal_pullback
+    nrows = size.(blocks, 1)
+    ncols = size.(blocks, 2)
+    function BlockDiagonal_pullback(Δ)
+        return _BlockDiagonal_pullback(Δ, nrows, ncols)
+    end
+    return BlockDiagonal(blocks), BlockDiagonal_pullback
 end
 
 # densification

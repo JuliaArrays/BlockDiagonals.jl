@@ -3,6 +3,14 @@
         x = [randn(1, 2), randn(2, 2)]
         test_rrule(BlockDiagonal, x)
         test_rrule(BlockDiagonal, x; output_tangent=Tangent{BlockDiagonal}(;blocks=x))
+
+        b = BlockDiagonal(x)
+        m = Matrix(b)
+        y, pb = rrule(BlockDiagonal, x)
+        # want to test `output_tangent=m`, but can't do it directly because of
+        # https://github.com/JuliaDiff/ChainRulesTestUtils.jl/issues/199
+        # so just compare the tangent to the tangent we get from the same BlockDiagonal
+        @test pb(b) == pb(m)
     end
 
     @testset "Matrix" begin
