@@ -117,6 +117,8 @@ function Base.Matrix(B::BlockDiagonal{T}) where {T}
     return A
 end
 
+Base.collect(B::BlockDiagonal) = Matrix(B)
+
 Base.size(B::BlockDiagonal) = sum(first∘size, blocks(B)), sum(last∘size, blocks(B))
 Base.similar(B::BlockDiagonal) = BlockDiagonal(map(similar, blocks(B)))
 Base.parent(B::BlockDiagonal) = B.blocks

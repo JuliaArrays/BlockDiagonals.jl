@@ -32,6 +32,12 @@ using Test
 
         @inferred Matrix(b1)
 
+        @testset "collect" begin
+            B = BlockDiagonal([randn(20, 20) for _ in 1:24])
+            collect(B)
+            @test @allocated(collect(B)) < 2_000_000
+        end
+
         @testset "BlockDiagonal does not copy" begin
             Bxy = BlockDiagonal([X, Y])
             X[1] = 1.1

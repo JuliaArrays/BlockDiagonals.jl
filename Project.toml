@@ -1,7 +1,7 @@
 name = "BlockDiagonals"
 uuid = "0a1fb500-61f7-11e9-3c65-f5ef3456f9f0"
 authors = ["Invenia Technical Computing Corporation"]
-version = "0.1.22"
+version = "0.1.23"
 
 [deps]
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
