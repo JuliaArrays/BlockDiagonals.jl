@@ -67,6 +67,17 @@ using Test
             # Should not allow setting value outside on-diagonal blocks to non-zero
             @test_throws ArgumentError X[1, 7] = 1
         end
+
+        @testset "pretty-printing" begin
+            io = IOBuffer()
+            d = Diagonal(1:6)
+            Base.print_array(io, d)
+            s1 = String(take!(io))
+            b = BlockDiagonal([Diagonal(1:3), Diagonal(4:6)])
+            Base.print_array(io, b)
+            s2 = String(take!(io))
+            @test s1 == s2
+        end
     end  # AbstractArray
 
     @testset "isequal_blocksizes" begin
