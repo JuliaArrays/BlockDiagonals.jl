@@ -166,4 +166,3 @@ end
 
 ## Division
 Base.:/(B::BlockDiagonal, n::Number) = BlockDiagonal(blocks(B) ./ n)
-
