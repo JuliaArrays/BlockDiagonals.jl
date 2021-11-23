@@ -144,10 +144,5 @@ using Test
             @test sum(size.(b4.blocks, 1)) == size(b4 * b5, 1)
             @test sum(size.(b5.blocks, 2)) == size(b4 * b5, 2)
         end
-
-        @testset "Left division" begin
-            x = rand(rng, N1 + N2 + N3)
-            @test b1 \ x ≈ inv(b1) * x
-        end
     end  # Multiplication
 end

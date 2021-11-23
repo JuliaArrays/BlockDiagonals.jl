@@ -229,4 +229,8 @@ using Test
             end
         end
     end  # SVD
+    @testset "Left division" begin
+        x = rand(rng, N1 + N2 + N3)
+        @test b1 \ x ≈ inv(b1) * x
+    end
 end
