@@ -228,7 +228,14 @@ using Test
         end
     end  # SVD
     @testset "Left division" begin
-        @test b1 \ a ≈ inv(b1) * a
-        @test_throws ArgumentError BlockDiagonal([A, B]) \ rand(rng, 2N + N1 + N2)
+        N1 = 20
+        N2 = 8
+        N3 = 5
+        A = BlockDiagonal([rand(rng, N1, N1), rand(rng, N2, N2)])
+        B = BlockDiagonal([rand(rng, N1, N2), rand(rng, N3, N1)])
+        x = rand(rng, N1 + N2)
+        y = rand(rng, N1 + N3)
+        @test A \ x ≈ inv(A) * x
+        @test B \ y ≈ Matrix(B) \ y
     end
 end

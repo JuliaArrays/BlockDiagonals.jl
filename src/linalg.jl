@@ -153,12 +153,9 @@ end
 function LinearAlgebra.:\(B::BlockDiagonal, vm::AbstractVecOrMat)
     row_i = 1
     # BlockDiagonals with non-square blocks
-    all(b -> size(b, 1) == size(b, 2), blocks(B)) || throw(
-        ArgumentError(
-            "Left division (\\) is not defined for BlockDiagonals with " *
-            "non-square blocks (they are singular matrices).",
-        ),
-    )
+    if !all(is_square, blocks(B))
+        return Matrix(B) \ vm # Fallback on the generic LinearAlgebra method
+    end
     result = similar(vm)
     for block in blocks(B)
         nrow = size(block, 1)
