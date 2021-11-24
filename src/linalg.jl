@@ -150,13 +150,13 @@ function _mul!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal, α::Number,
     return C
 end
 
-function LinearAlgebra.:\(A::BlockDiagonal, B::AbstractVecOrMat)
-    i = 1
-    c = similar(B)
-    for a in blocks(A)
-        d = size(a, 1)
-        c[i:i+d-1, :] = a \ B[i:i+d-1, :]
-        i += d
+function LinearAlgebra.:\(B::BlockDiagonal, vm::AbstractVecOrMat)
+    row_i = 1
+    result = similar(vm)
+    for block in blocks(B)
+        nrow = size(block, 1)
+        result[row_i:row_i+nrow-1, :] = block \ vm[row_i:row_i+nrow-1, :]
+        row_i += nrow
     end
-    return c
+    return result
 end
