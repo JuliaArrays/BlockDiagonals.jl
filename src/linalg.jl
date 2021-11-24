@@ -150,8 +150,15 @@ function _mul!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal, α::Number,
     return C
 end
 
+# There is no restriction on x to be able to pass Cholesky objexts
+function issquare(x)
+    indsm, indsn = size(x)
+    n1 == n2
+end
+
 function LinearAlgebra.:\(B::BlockDiagonal, vm::AbstractVecOrMat)
     row_i = 1
+    all(issquare, blocks(B)) || error("left division is not compatible with non-square matrices")
     result = similar(vm)
     for block in blocks(B)
         nrow = size(block, 1)
