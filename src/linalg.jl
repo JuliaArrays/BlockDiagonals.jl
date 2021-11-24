@@ -149,3 +149,18 @@ function _mul!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal, α::Number,
 
     return C
 end
+
+function LinearAlgebra.:\(B::BlockDiagonal, vm::AbstractVecOrMat)
+    row_i = 1
+    # BlockDiagonals with non-square blocks
+    if !all(is_square, blocks(B))
+        return Matrix(B) \ vm # Fallback on the generic LinearAlgebra method
+    end
+    result = similar(vm)
+    for block in blocks(B)
+        nrow = size(block, 1)
+        result[row_i:(row_i + nrow - 1), :] = block \ vm[row_i:(row_i + nrow - 1), :]
+        row_i += nrow
+    end
+    return result
+end

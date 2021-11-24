@@ -154,7 +154,6 @@ using Test
             @test logdet(b̂1) ≈ logdet(Matrix(b̂1))
         end
     end  # Unary
-
     @testset "Cholesky decomposition" begin
         X = [  4  12 -16
               12  37 -43
@@ -163,10 +162,10 @@ using Test
               0.0 1.0  5.0
               0.0 0.0  3.0]
 
-        B = BlockDiagonal([X, X])
-        C = cholesky(B)
+        BD = BlockDiagonal([X, X])
+        C = cholesky(BD)
         @test C isa Cholesky{Float64, <:BlockDiagonal{Float64}}
-        @test C.U ≈ cholesky(Matrix(B)).U
+        @test C.U ≈ cholesky(Matrix(BD)).U
         @test C.U ≈ BlockDiagonal([U, U])
         @test C.L ≈ BlockDiagonal([U', U'])
         @test C.UL ≈ C.U
@@ -175,26 +174,25 @@ using Test
 
         M = BlockDiagonal(map(Matrix, blocks(C.L)))
         C = Cholesky(M, 'L', 0)
-        @test C.U ≈ cholesky(Matrix(B)).U
+        @test C.U ≈ cholesky(Matrix(BD)).U
         @test C.U ≈ BlockDiagonal([U, U])
         @test C.L ≈ BlockDiagonal([U', U'])
         @test C.UL ≈ C.L
         @test C.uplo === 'L'
         @test C.info == 0
     end  # Cholesky
-
     @testset "Singular Value Decomposition" begin
         X = [  4  12 -16
               12  37 -43
              -16 -43  98]
-        B = BlockDiagonal([X, X])
+        BD = BlockDiagonal([X, X])
 
         @testset "full=$full" for full in (true, false)
 
             @testset "svd_blockwise" begin
-                U, S, Vt = svd_blockwise(B; full=full)
+                U, S, Vt = svd_blockwise(BD; full=full)
                 F = SVD(U, S, Vt)
-                @test B ≈ F.U * Diagonal(F.S) * F.Vt
+                @test BD ≈ F.U * Diagonal(F.S) * F.Vt
 
                 # Matrices should be BlockDiagonal
                 @test F isa SVD{Float64, Float64, <:BlockDiagonal{Float64}}
@@ -203,7 +201,7 @@ using Test
                 @test F.Vt isa BlockDiagonal
 
                 # Should have same values, but not sorted so as to keep BlockDiagonal structure
-                F_ = svd(Matrix(B), full=full)
+                F_ = svd(Matrix(BD), full=full)
                 for fname in fieldnames(SVD)
                     @test sort(vec(getfield(F, fname))) ≈ sort(vec(getfield(F_, fname)))
                 end
@@ -213,11 +211,11 @@ using Test
             end
 
             @testset "svd" begin
-                F = svd(B; full=full)
-                F_ = svd(Matrix(B), full=full)
+                F = svd(BD; full=full)
+                F_ = svd(Matrix(BD), full=full)
 
                 @test F isa SVD
-                @test B ≈ F.U * Diagonal(F.S) * F.Vt
+                @test BD ≈ F.U * Diagonal(F.S) * F.Vt
 
                 @test F == F_
                 for fname in fieldnames(SVD)
@@ -229,4 +227,15 @@ using Test
             end
         end
     end  # SVD
+    @testset "Left division" begin
+        N1 = 20
+        N2 = 8
+        N3 = 5
+        A = BlockDiagonal([rand(rng, N1, N1), rand(rng, N2, N2)])
+        B = BlockDiagonal([rand(rng, N1, N2), rand(rng, N3, N1)])
+        x = rand(rng, N1 + N2)
+        y = rand(rng, N1 + N3)
+        @test A \ x ≈ inv(A) * x
+        @test B \ y ≈ Matrix(B) \ y
+    end
 end
