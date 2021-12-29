@@ -31,5 +31,6 @@
         @test project(adjoint(ones(5, 5))) == bd
         @test project(Diagonal(ones(5))) isa BlockDiagonal
         @test project(Diagonal(ones(5))) == Diagonal(ones(5))
+        @test project(Tangent{BlockDiagonal}(blocks=bd.blocks)) isa Tangent
     end
 end
