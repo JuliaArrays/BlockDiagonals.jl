@@ -31,5 +31,7 @@
         @test project(adjoint(ones(5, 5))) == bd
         @test project(Diagonal(ones(5))) isa BlockDiagonal
         @test project(Diagonal(ones(5))) == Diagonal(ones(5))
+
+        @test ProjectTo(bd)(ChainRulesCore.ZeroTangent()) == ChainRulesCore.ZeroTangent()
     end
 end

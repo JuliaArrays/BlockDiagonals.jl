@@ -84,7 +84,7 @@ function ProjectTo(b::BlockDiagonal)
     return ProjectTo{BlockDiagonal}(; blocks=blocks, blocksizes=blocksizes(b))
 end
 
-function (project::ProjectTo{BlockDiagonal})(dx)
+function (project::ProjectTo{BlockDiagonal})(dx::AbstractArray)
     # prepare to index into the dense array
     nrows = first.(project.blocksizes)
     ncols = last.(project.blocksizes)
