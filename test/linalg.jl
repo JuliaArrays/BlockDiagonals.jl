@@ -4,6 +4,11 @@ using LinearAlgebra
 using Random
 using Test
 
+# piracy to make SVD approximate comparisons easier
+function Base.isapprox(a::SVD, b::SVD)
+    return a.U ≈ b.U && a.V ≈ b.V && a.Vt ≈ b.Vt
+end
+
 @testset "linalg.jl" begin
     rng = MersenneTwister(123456)
     N1, N2, N3 = 3, 4, 5
@@ -217,7 +222,7 @@ using Test
                 @test F isa SVD
                 @test BD ≈ F.U * Diagonal(F.S) * F.Vt
 
-                @test F == F_
+                @test F ≈ F_
                 for fname in fieldnames(SVD)
                     @test getfield(F, fname) ≈ getfield(F_, fname)
                 end
