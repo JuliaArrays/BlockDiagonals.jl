@@ -145,17 +145,15 @@ end
 # that the same entry is available via `getblock(B, p)[i, end+j]`; `p = -1` if no such `p`.
 function _block_indices(B::BlockDiagonal, i::Integer, j::Integer)
     all((0, 0) .< (i, j) .<= size(B)) || throw(BoundsError(B, (i, j)))
-    nrows = size.(blocks(B), 1)
-    ncols = size.(blocks(B), 2)
     # find the on-diagonal block `p` in column `j`
     p = 0
-    while j > 0
+    @inbounds while j > 0
         p += 1
-        j -= ncols[p]
+        j -= size(blocks(B)[p], 2)
     end
-    i -= sum(nrows[1:(p-1)])
+    @views @inbounds i -= sum(size.(blocks(B)[1:(p-1)], 1))
     # if row `i` outside of block `p`, set `p` to place-holder value `-1`
-    if i <= 0 || i > nrows[p]
+    if i <= 0 || i > size(blocks(B)[p], 1)
         p = -1
     end
     return p, i, j
