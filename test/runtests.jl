@@ -1,10 +1,16 @@
 using BlockDiagonals
 using ChainRulesCore
 using ChainRulesTestUtils
+using Dates
+using Distributions
 using Documenter
 using FiniteDifferences # For overloading to_vec
+using JuMP
+using Random
 using Test
 using LinearAlgebra
+
+Random.seed!(42069)
 
 push!(ChainRulesTestUtils.TRANSFORMS_TO_ALT_TANGENTS, x -> @thunk(x))
 
@@ -15,4 +21,5 @@ push!(ChainRulesTestUtils.TRANSFORMS_TO_ALT_TANGENTS, x -> @thunk(x))
     include("base_maths.jl")
     include("chainrules.jl")
     include("linalg.jl")
+    include("jump.jl")
 end  # tests
