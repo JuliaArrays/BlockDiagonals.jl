@@ -56,6 +56,8 @@ using Test
             @test similar(b1) isa BlockDiagonal
             @test size(similar(b1)) == size(b1)
             @test size.(blocks(similar(b1))) == size.(blocks(b1))
+
+            @test similar(b1, Float32) isa BlockDiagonal{Float32}
         end
 
         @testset "setindex!" begin
