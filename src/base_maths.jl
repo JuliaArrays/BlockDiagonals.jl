@@ -92,6 +92,7 @@ function _mulblocksizes(bblocks, M::AbstractMatrix)
     return zip(size.(bblocks, 1), Base.Iterators.repeated(size(M, 2), length(bblocks)))
 end
 
+# avoid ambiguities arising with AbstractVecOrMat
 Base.:*(B::BlockDiagonal, x::AbstractVector) = _mul(B, x)
 Base.:*(B::BlockDiagonal, X::AbstractMatrix) = _mul(B, X)
 
