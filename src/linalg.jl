@@ -4,7 +4,7 @@ for f in (:adjoint, :eigvecs, :inv, :pinv, :transpose)
     @eval LinearAlgebra.$f(B::BlockDiagonal) = BlockDiagonal(map($f, blocks(B)))
 end
 
-LinearAlgebra.diag(B::BlockDiagonal) = mapreduce(diag, vcat, blocks(B))
+LinearAlgebra.diag(B::BlockDiagonal) = map(i -> getindex(B, i, i), 1:minimum(size(B)))
 LinearAlgebra.det(B::BlockDiagonal) = prod(det, blocks(B))
 LinearAlgebra.logdet(B::BlockDiagonal) = sum(logdet, blocks(B))
 LinearAlgebra.tr(B::BlockDiagonal) = sum(tr, blocks(B))
@@ -73,7 +73,14 @@ end
 
 
 svdvals_blockwise(B::BlockDiagonal) = mapreduce(svdvals, vcat, blocks(B))
-LinearAlgebra.svdvals(B::BlockDiagonal) = sort!(svdvals_blockwise(B); rev=true)
+function LinearAlgebra.svdvals(B::BlockDiagonal)
+    # if all the blocks are squares
+    if all(map(t -> t[1] == t[2], blocksizes(B)))
+        return sort!(svdvals_blockwise(B); rev=true)
+    else
+        return svdvals(Matrix(B))
+    end
+end
 
 # `B = U * Diagonal(S) * Vt` with `U` and `Vt` `BlockDiagonal` (`S` only sorted block-wise).
 function svd_blockwise(B::BlockDiagonal{T}; full::Bool=false) where T
