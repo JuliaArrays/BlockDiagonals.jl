@@ -149,11 +149,11 @@ function _block_indices(B::BlockDiagonal, i::Integer, j::Integer)
     p = 0
     @inbounds while j > 0
         p += 1
-        j -= size(blocks(B)[p], 2)
+        j -= blocksize(B, p)[2]
     end
     @views @inbounds i -= sum(size.(blocks(B)[1:(p-1)], 1))
     # if row `i` outside of block `p`, set `p` to place-holder value `-1`
-    if i <= 0 || i > size(blocks(B)[p], 1)
+    if i <= 0 || i > blocksize(B, p)[1]
         p = -1
     end
     return p, i, j
