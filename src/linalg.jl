@@ -73,7 +73,14 @@ end
 
 
 svdvals_blockwise(B::BlockDiagonal) = mapreduce(svdvals, vcat, blocks(B))
-LinearAlgebra.svdvals(B::BlockDiagonal) = sort!(svdvals_blockwise(B); rev=true)
+function LinearAlgebra.svdvals(B::BlockDiagonal)
+    # if all the blocks are squares
+    if all(map(t -> t[1] == t[2], blocksizes(B)))
+        return sort!(svdvals_blockwise(B); rev=true)
+    else
+        return svdvals(Matrix(B))
+    end
+end
 
 # `B = U * Diagonal(S) * Vt` with `U` and `Vt` `BlockDiagonal` (`S` only sorted block-wise).
 function svd_blockwise(B::BlockDiagonal{T}; full::Bool=false) where T
