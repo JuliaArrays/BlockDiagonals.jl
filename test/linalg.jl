@@ -16,6 +16,7 @@ end
     b1 = BlockDiagonal([rand(rng, N1, N1), rand(rng, N2, N2), rand(rng, N3, N3)])
     b2 = BlockDiagonal([rand(rng, N1, N1), rand(rng, N3, N3), rand(rng, N2, N2)])
     b3 = BlockDiagonal([rand(rng, N1, N1), rand(rng, N2, N2), rand(rng, N2, N2)])
+    b_nonsq = BlockDiagonal([rand(rng, N1, N2), rand(rng, N2, N1)])
     A = rand(rng, N, N + N1)
     B = rand(rng, N + N1, N + N2)
     A′, B′ = A', B'
@@ -36,8 +37,12 @@ end
     end
 
     @testset "Unary Linear Algebra" begin
+        nonsquare = (adjoint, diag, pinv, svdvals, transpose)
         @testset "$f" for f in (adjoint, det, diag, eigvals, inv, pinv, svdvals, transpose, tr)
             @test f(b1) ≈ f(Matrix(b1))
+            if f in nonsquare
+                @test f(b_nonsq) ≈ f(Matrix(b_nonsq))
+            end
         end
 
         @testset "permute=$p, scale=$s" for p in (true, false), s in (true, false)
