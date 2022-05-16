@@ -16,6 +16,9 @@ using Test
     a = rand(rng, N)
     b = rand(rng, N + N1)
 
+    b64 = BlockDiagonal([rand(rng, 2, 2), rand(rng, 2, 2)])
+    b32 = BlockDiagonal([rand(rng, Float32, 2, 2), rand(rng, Float32, 2, 2)])
+
     @testset "Addition" begin
         @testset "BlockDiagonal + BlockDiagonal" begin
             @test b1 + b1 isa BlockDiagonal
@@ -94,6 +97,10 @@ using Test
             @test b1 * a isa Vector
             @test b1 * a ≈ Matrix(b1) * a
             @test_throws DimensionMismatch b1 * b
+
+            # promote_type
+            @test b32 * rand(4) isa Vector{Float64}
+            @test b64 * rand(Float32, 4) isa Vector{Float64}
         end
         @testset "Vector^T * BlockDiagonal" begin
             @test a' * b1 isa Adjoint{<:Number, <:Vector}
@@ -118,6 +125,12 @@ using Test
             m = rand(5, 0)
             @test m' * BlockDiagonal([m]) == m' * m == rand(0, 0)
             @test m * BlockDiagonal([m']) == m * m' == zeros(5, 5)
+
+            # promote_type
+            @test b32 * rand(4, 4) isa Matrix{Float64}
+            @test rand(4, 4) * b32 isa Matrix{Float64}
+            @test b64 * rand(Float32, 4, 4) isa Matrix{Float64}
+            @test rand(Float32, 4, 4) * b64 isa Matrix{Float64}
         end
 
         @testset "BlockDiagonal * Diagonal" begin
@@ -132,6 +145,10 @@ using Test
             @test D * b1 isa BlockDiagonal
             @test D * b1 ≈ D * Matrix(b1)
             @test_throws DimensionMismatch D′ * b1
+
+            # promote_type
+            @test b32 * Diagonal(rand(4)) isa BlockDiagonal{Float64}
+            @test Diagonal(rand(4)) * b32 isa BlockDiagonal{Float64}
         end
 
         @testset "Non-Square BlockDiagonal * Non-Square BlockDiagonal" begin

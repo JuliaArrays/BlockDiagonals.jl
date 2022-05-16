@@ -92,14 +92,15 @@ function _mulblocksizes(bblocks, M::AbstractMatrix)
     return zip(size.(bblocks, 1), Base.Iterators.repeated(size(M, 2), length(bblocks)))
 end
 
+# avoid ambiguities arising with AbstractVecOrMat
 Base.:*(B::BlockDiagonal, x::AbstractVector) = _mul(B, x)
 Base.:*(B::BlockDiagonal, X::AbstractMatrix) = _mul(B, X)
 
-function _mul(B::BlockDiagonal{T}, x::AbstractVecOrMat) where {T}
+function _mul(B::BlockDiagonal{T}, x::AbstractVecOrMat{T2}) where {T, T2}
     _check_matmul_dims(B, x)
     bblocks = blocks(B)
     new_blocksizes = _mulblocksizes(bblocks, x)
-    d = similar.(bblocks, T, new_blocksizes)
+    d = similar.(bblocks, promote_type(T, T2), new_blocksizes)
     ed = 0
     @inbounds @views for (p, block) in enumerate(bblocks)
         st = ed + 1  # start
@@ -109,11 +110,11 @@ function _mul(B::BlockDiagonal{T}, x::AbstractVecOrMat) where {T}
     return reduce(vcat, d)
 end
 
-function Base.:*(M::AbstractMatrix, B::BlockDiagonal{T}) where T
+function Base.:*(M::AbstractMatrix{T}, B::BlockDiagonal{T2}) where {T, T2}
     _check_matmul_dims(M, B)
     bblocks = blocks(B)
     new_blocksizes = zip(fill(size(M, 1), length(bblocks)), size.(bblocks, 2))
-    d = similar.(bblocks, T, new_blocksizes)
+    d = similar.(bblocks, promote_type(T, T2), new_blocksizes)
     ed = 0
     @inbounds @views for (p, block) in enumerate(bblocks)
         st = ed + 1  # start
@@ -124,9 +125,9 @@ function Base.:*(M::AbstractMatrix, B::BlockDiagonal{T}) where T
 end
 
 # Diagonal
-function Base.:*(B::BlockDiagonal, M::Diagonal)::BlockDiagonal
+function Base.:*(B::BlockDiagonal{T}, M::Diagonal{T2})::BlockDiagonal where {T, T2}
     _check_matmul_dims(B, M)
-    A = similar(B)
+    A = similar(B, promote_type(T, T2))
     d = parent(M)
     col = 1
     @inbounds @views for (p, block) in enumerate(blocks(B))
@@ -140,9 +141,9 @@ function Base.:*(B::BlockDiagonal, M::Diagonal)::BlockDiagonal
     return A
 end
 
-function Base.:*(M::Diagonal, B::BlockDiagonal)::BlockDiagonal
+function Base.:*(M::Diagonal{T}, B::BlockDiagonal{T2})::BlockDiagonal where {T, T2}
     _check_matmul_dims(M, B)
-    A = similar(B)
+    A = similar(B, promote_type(T, T2))
     d = parent(M)
     row = 1
     @inbounds @views for (p, block) in enumerate(blocks(B))
