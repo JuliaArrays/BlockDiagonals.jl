@@ -124,4 +124,9 @@ using Test
 
         @test_throws DimensionMismatch copy!(b2, b1)
     end
+
+    @testset "getindex bug" begin
+        b = BlockDiagonal(AbstractMatrix{Float64}[ones(2, 2)])
+        @test b[1] == 1
+    end
 end
