@@ -7,6 +7,7 @@
 [![code style blue](https://img.shields.io/badge/code%20style-blue-4495d1.svg)](https://github.com/invenia/BlueStyle)
 
 Functionality for working efficiently with [block diagonal matrices](https://en.wikipedia.org/wiki/Block_matrix#Block_diagonal_matrices).
+_Note that non-square blocks are allowed_, similarly to [`scipy.block_diag`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.block_diag.html), but in contrast to the mathematical definition above.
 
 Construct a `BlockDiagonal` matrix by passing in only the non-zero blocks on the diagonal, and use it as a regular matrix
 ```julia
