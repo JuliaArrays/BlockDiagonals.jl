@@ -161,6 +161,10 @@ function _block_indices(B::BlockDiagonal, i::Integer, j::Integer)
     return p, i, j
 end
 
+function Base.copy(b::BlockDiagonal)
+    return BlockDiagonal(copy.(blocks(b)))
+end
+
 function Base.copy!(dest::BlockDiagonal, src::BlockDiagonal)
     isequal_blocksizes(dest, src) || throw(DimensionMismatch("dest and src have different block sizes"))
     for i in eachindex(blocks(dest))
