@@ -129,4 +129,16 @@ using Test
         b = BlockDiagonal(AbstractMatrix{Float64}[ones(2, 2)])
         @test b[1] == 1
     end
+
+    @testset "convert(BlockDiagonal{F, T{F}}, block_diagonal)" for T in (
+        Symmetric, UpperTriangular, Transpose, Hermitian
+    )
+        special = T(rand(2, 2))
+        b = BlockDiagonal([special])
+
+        convert_first = BlockDiagonal([convert(Matrix, special)])
+        convert_last = convert(BlockDiagonal{Float64, Matrix{Float64}}, b)
+
+        @test convert_first == convert_last
+    end
 end
