@@ -142,6 +142,11 @@ end
     @inbounds return p > 0 ? getblock(B, p)[i, end + j] : zero(T)
 end
 
+function Base.convert(::Type{BlockDiagonal{T, M}}, b::BlockDiagonal) where {T, M}
+    new_blocks = convert.(M, blocks(b))
+    return BlockDiagonal(new_blocks)::BlockDiagonal{T, M}
+end
+
 # Transform indices `i, j` (identifying entry `Matrix(B)[i, j]`) into indices `p, i, j` such
 # that the same entry is available via `getblock(B, p)[i, end+j]`; `p = -1` if no such `p`.
 function _block_indices(B::BlockDiagonal, i::Integer, j::Integer)
