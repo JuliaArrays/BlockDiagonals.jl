@@ -182,6 +182,7 @@ end
         @test C.uplo === 'U'
         @test C.info == 0
         @test typeof(C) == Cholesky{Float64, BlockDiagonal{Float64, Matrix{Float64}}}
+        @test PDMat(cholesky(BD)) == PDMat(cholesky(Matrix(BD)))
 
         M = BlockDiagonal(map(Matrix, blocks(C.L)))
         C = Cholesky(M, 'L', 0)
