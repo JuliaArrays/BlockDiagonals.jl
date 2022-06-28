@@ -105,7 +105,7 @@ function LinearAlgebra.svd(B::BlockDiagonal; full::Bool=false)::SVD
 end
 
 function LinearAlgebra.cholesky(B::BlockDiagonal)::Cholesky
-    C = BlockDiagonal(map(b -> cholesky(b).U.data, blocks(B)))
+    C = BlockDiagonal(map(b -> parent(cholesky(b).U), blocks(B)))
     return Cholesky(C, 'U', 0)
 end
 
