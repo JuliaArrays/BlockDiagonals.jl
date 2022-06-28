@@ -3,6 +3,7 @@ using ChainRulesCore
 using ChainRulesTestUtils
 using Documenter
 using FiniteDifferences # For overloading to_vec
+using PDMats
 using Test
 using LinearAlgebra
 

@@ -181,6 +181,8 @@ end
         @test C.UL ≈ C.U
         @test C.uplo === 'U'
         @test C.info == 0
+        @test typeof(C) == Cholesky{Float64, BlockDiagonal{Float64, Matrix{Float64}}}
+        @test PDMat(cholesky(BD)) == PDMat(cholesky(Matrix(BD)))
 
         M = BlockDiagonal(map(Matrix, blocks(C.L)))
         C = Cholesky(M, 'L', 0)
@@ -190,6 +192,7 @@ end
         @test C.UL ≈ C.L
         @test C.uplo === 'L'
         @test C.info == 0
+        @test typeof(C) == Cholesky{Float64, BlockDiagonal{Float64, Matrix{Float64}}}
     end  # Cholesky
     @testset "Singular Value Decomposition" begin
         X = [  4  12 -16
