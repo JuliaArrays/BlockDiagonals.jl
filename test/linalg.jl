@@ -193,6 +193,11 @@ end
         @test C.uplo === 'L'
         @test C.info == 0
         @test typeof(C) == Cholesky{Float64, BlockDiagonal{Float64, Matrix{Float64}}}
+
+        # we didn't think we needed to support this, but #109
+        d = Diagonal(rand(5))
+        s1 = BlockDiagonal([d])
+        @test cholesky(s1).U == cholesky(d).U
     end  # Cholesky
     @testset "Singular Value Decomposition" begin
         X = [  4  12 -16
