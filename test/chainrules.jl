@@ -14,8 +14,9 @@
     end
 
     @testset "Matrix" begin
-        D = BlockDiagonal([randn(1, 2), randn(2, 2)])
+        D = BlockDiagonal([randn(2, 2), randn(2, 2)])
         test_rrule(Matrix, D)
+        test_rrule(Matrix, D, output_tangent=UpperTriangular(rand(4, 4)))
     end
 
     @testset "BlockDiagonal * Vector" begin
