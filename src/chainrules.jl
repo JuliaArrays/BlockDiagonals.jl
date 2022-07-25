@@ -25,7 +25,7 @@ function ChainRulesCore.rrule(::Type{<:BlockDiagonal}, blocks::Vector{V}) where 
 end
 
 # densification
-function _densification_pullback(Ȳ::Matrix, T, nrows, ncols)
+function _densification_pullback(Ȳ::AbstractMatrix, T, nrows, ncols)
     row_idxs = cumsum(nrows) .- nrows .+ 1
     col_idxs = cumsum(ncols) .- ncols .+ 1
 
