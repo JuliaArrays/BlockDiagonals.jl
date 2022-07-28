@@ -76,6 +76,8 @@ using Test
         
         @test -b1 == -Matrix(b1)
         @test b1 - b1 == Matrix(b1) - Matrix(b1)
+        @test Matrix(b1) - b2 == Matrix(b1) - Matrix(b2)
+        @test b1 - Matrix(b2) == Matrix(b1) - Matrix(b2)
     end
 
     @testset "Multiplication" begin
