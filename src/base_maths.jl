@@ -66,6 +66,8 @@ end
 ## Subtraction
 Base.:-(B::BlockDiagonal) = BlockDiagonal(.-(blocks(B)))
 Base.:-(M::AbstractMatrix, B::BlockDiagonal) =  M + -B
+Base.:-(B::BlockDiagonal, M::AbstractMatrix) =  -M + B
+Base.:-(B::BlockDiagonal, B2::BlockDiagonal) =  B + (-B2)
 
 ## Multiplication
 Base.:*(n::Number, B::BlockDiagonal) = B * n
