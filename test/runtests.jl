@@ -16,4 +16,5 @@ push!(ChainRulesTestUtils.TRANSFORMS_TO_ALT_TANGENTS, x -> @thunk(x))
     include("base_maths.jl")
     include("chainrules.jl")
     include("linalg.jl")
+    include("deprecate.jl")
 end  # tests
