@@ -5,6 +5,7 @@ for f in (:adjoint, :eigvecs, :inv, :pinv, :transpose)
 end
 
 LinearAlgebra.diag(B::BlockDiagonal) = map(i -> getindex(B, i, i), 1:minimum(size(B)))
+LinearAlgebra.diag(B::BlockDiagonal{T, V, true}) where {T, V} = mapreduce(diag, vcat, B.blocks)
 LinearAlgebra.det(B::BlockDiagonal) = prod(det, blocks(B))
 LinearAlgebra.logdet(B::BlockDiagonal) = sum(logdet, blocks(B))
 LinearAlgebra.tr(B::BlockDiagonal) = sum(tr, blocks(B))
