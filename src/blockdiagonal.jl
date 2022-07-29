@@ -5,16 +5,19 @@
 
 A matrix with matrices on the diagonal, and zeros off the diagonal.
 """
-struct BlockDiagonal{T, V<:AbstractMatrix{T}} <: AbstractMatrix{T}
+struct BlockDiagonal{T, V<:AbstractMatrix{T}, S} <: AbstractMatrix{T}
     blocks::Vector{V}
 
-    function BlockDiagonal{T, V}(blocks::Vector{V}) where {T, V<:AbstractMatrix{T}}
-        return new{T, V}(blocks)
+    function BlockDiagonal{T, V, S}(blocks::Vector{V}) where {T, V<:AbstractMatrix{T}, S}
+        infer_S = all(is_square.(blocks))
+        S == infer_S || throw(ArgumentError("inferred S $infer_S must be equal to S $S"))
+        return new{T, V, S}(blocks)
     end
 end
 
 function BlockDiagonal(blocks::Vector{V}) where {T, V<:AbstractMatrix{T}}
-    return BlockDiagonal{T, V}(blocks)
+    S = all(is_square.(blocks))
+    return BlockDiagonal{T, V, S}(blocks)
 end
 
 BlockDiagonal(B::BlockDiagonal) = B

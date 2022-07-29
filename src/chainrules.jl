@@ -49,9 +49,9 @@ end
 # multiplication
 function ChainRulesCore.rrule(
         ::typeof(*),
-        bm::BlockDiagonal{T, V},
+        bm::BlockDiagonal{T, V, S},
         v::StridedVector{T}
-    ) where {T<:Union{Real, Complex}, V<:Matrix{T}}
+    ) where {T<:Union{Real, Complex}, V<:Matrix{T}, S}
 
     y = bm * v
 
@@ -72,7 +72,7 @@ function ChainRulesCore.rrule(
             )
         end
 
-        b̄m = Tangent{BlockDiagonal{T, V}}(;blocks=Δblocks)
+        b̄m = Tangent{BlockDiagonal{T, V, S}}(;blocks=Δblocks)
         v̄ = InplaceableThunk(X̄ -> mul!(X̄, bm', ȳ, true, true), @thunk(bm' * ȳ))
         return NoTangent(), b̄m, v̄
     end

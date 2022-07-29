@@ -181,7 +181,7 @@ end
         @test C.UL ≈ C.U
         @test C.uplo === 'U'
         @test C.info == 0
-        @test typeof(C) == Cholesky{Float64, BlockDiagonal{Float64, Matrix{Float64}}}
+        @test typeof(C) == Cholesky{Float64, BlockDiagonal{Float64, Matrix{Float64}, true}}
         @test PDMat(cholesky(BD)) == PDMat(cholesky(Matrix(BD)))
 
         M = BlockDiagonal(map(Matrix, blocks(C.L)))
@@ -192,7 +192,7 @@ end
         @test C.UL ≈ C.L
         @test C.uplo === 'L'
         @test C.info == 0
-        @test typeof(C) == Cholesky{Float64, BlockDiagonal{Float64, Matrix{Float64}}}
+        @test typeof(C) == Cholesky{Float64, BlockDiagonal{Float64, Matrix{Float64}, true}}
 
         # we didn't think we needed to support this, but #109
         d = Diagonal(rand(5))
