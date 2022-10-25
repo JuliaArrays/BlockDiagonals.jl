@@ -84,6 +84,11 @@ using Test
         @test blocksize(B, 2) == blocksizes(B)[2] == blocksize(B, 2, 2)
     end
 
+    @testset "no blocks" begin
+        B = BlockDiagonal(Matrix{Float64}[]);
+        @test size(B) == (0, 0)
+    end
+
     @testset "Equality" begin
         # Equality
         @test b1 == b1
