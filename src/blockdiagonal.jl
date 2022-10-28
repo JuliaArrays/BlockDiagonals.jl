@@ -121,7 +121,7 @@ Base.collect(B::BlockDiagonal) = Matrix(B)
 
 # init kwarg for sum introduced in v1.6
 # see https://github.com/JuliaLang/julia/blob/master/base/reduce.jl#L492
-@static if VERSION  < v"1.6"
+@static if VERSION < v"1.6"
     function Base.size(B::BlockDiagonal)
         if isempty(blocks(B))
             return 0, 0
