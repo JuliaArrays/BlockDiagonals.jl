@@ -108,12 +108,14 @@ using Test
         BlockDiagonals.setblock!(B, r[1], 1)
         @test BlockDiagonals.getblock(B, 1) == r[1]
         @test_throws DimensionMismatch BlockDiagonals.setblock!(B, r[2], 1)
+        @test_throws BoundsError BlockDiagonals.setblock!(B, r[2], 3)
 
         # Cartesian index
         BlockDiagonals.setblock!(B, r[2], 2, 2)
         @test BlockDiagonals.getblock(B, 2, 2) == r[2]
         @test_throws DimensionMismatch BlockDiagonals.setblock!(B, r[1], 2, 2)
         @test_throws ArgumentError BlockDiagonals.setblock!(B, r[1], 1, 2)
+        @test_throws BoundsError BlockDiagonals.setblock!(B, r[2], 3, 3)
     end
 
     @testset "Equality" begin
