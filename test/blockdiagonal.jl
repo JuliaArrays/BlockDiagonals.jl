@@ -99,6 +99,24 @@ using Test
 
     end
 
+    @testset "setblock!" begin
+        b = [rand(3, 3), rand(4, 4)]
+        r = [rand(3, 3), rand(4, 4)]
+
+        B = BlockDiagonal(b)
+
+        # Vector index
+        BlockDiagonals.setblock!(B, r[1], 1)
+        @test BlockDiagonals.getblock(B, 1) == r[1]
+        @test_throws DimensionMismatch BlockDiagonals.setblock!(B, r[2], 1)
+
+        # Cartesian index
+        BlockDiagonals.setblock!(B, r[2], 2, 2)
+        @test BlockDiagonals.getblock(B, 2, 2) == r[2]
+        @test_throws DimensionMismatch BlockDiagonals.setblock!(B, r[1], 2, 2)
+        @test_throws ArgumentError BlockDiagonals.setblock!(B, r[1], 1, 2)
+    end
+
     @testset "Equality" begin
         # Equality
         @test b1 == b1
