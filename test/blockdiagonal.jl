@@ -96,7 +96,6 @@ using Test
         @test BlockDiagonals.getblock(B, 2, 2) == b[2]
         @test BlockDiagonals.getblock(B, 1, 2) == zeros(blocksize(B, 1, 2))
         @test_throws BoundsError BlockDiagonals.getblock(B, 1, 3)
-
     end
 
     @testset "setblock!" begin
