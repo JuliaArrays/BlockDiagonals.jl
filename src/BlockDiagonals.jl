@@ -15,5 +15,6 @@ include("blockdiagonal.jl")
 include("base_maths.jl")
 include("chainrules.jl")
 include("linalg.jl")
+include("deprecate.jl")
 
 end  # end module

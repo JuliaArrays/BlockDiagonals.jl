@@ -5,6 +5,7 @@ for f in (:adjoint, :eigvecs, :inv, :pinv, :transpose)
 end
 
 LinearAlgebra.diag(B::BlockDiagonal) = map(i -> getindex(B, i, i), 1:minimum(size(B)))
+LinearAlgebra.diag(B::BlockDiagonal{T, V, true}) where {T, V} = mapreduce(diag, vcat, B.blocks)
 LinearAlgebra.det(B::BlockDiagonal) = prod(det, blocks(B))
 LinearAlgebra.logdet(B::BlockDiagonal) = sum(logdet, blocks(B))
 LinearAlgebra.tr(B::BlockDiagonal) = sum(tr, blocks(B))
@@ -157,12 +158,11 @@ function _mul!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal, α::Number,
     return C
 end
 
+function LinearAlgebra.:\(B::BlockDiagonal{T, V, false}, vm::AbstractVecOrMat) where {T, V}
+    return Matrix(B) \ vm # Fallback on the generic LinearAlgebra method
+end
 function LinearAlgebra.:\(B::BlockDiagonal, vm::AbstractVecOrMat)
     row_i = 1
-    # BlockDiagonals with non-square blocks
-    if !all(is_square, blocks(B))
-        return Matrix(B) \ vm # Fallback on the generic LinearAlgebra method
-    end
     result = similar(vm)
     for block in blocks(B)
         nrow = size(block, 1)
