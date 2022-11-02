@@ -256,8 +256,8 @@ end
         y = rand(rng, N2 + N4)
 
         @testset "Lower triangular" begin
-            @test lmul!(LowerTriangular(A), copy(x)) ≈ lmul!(LowerTriangular(Matrix(A)), x)
-            @test lmul!(LowerTriangular(B), copy(y)) ≈ lmul!(LowerTriangular(Matrix(B)), y)
+            @test lmul!(LowerTriangular(A), copy(x)) ≈ lmul!(LowerTriangular(Matrix(A)), copy(x))
+            @test lmul!(LowerTriangular(B), copy(y)) ≈ lmul!(LowerTriangular(Matrix(B)), copy(y))
         end
     end
     @testset "Left division" begin
