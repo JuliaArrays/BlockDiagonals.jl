@@ -168,7 +168,7 @@ function LinearAlgebra.lmul!(B::LowerTriangular{<:Any,<:BlockDiagonal}, vm::Stri
         @views lmul!(LowerTriangular(block), vm[row_i:(row_i + nrow - 1), :])
         row_i += nrow
     end
-    vm
+    return vm
 end
 
 function LinearAlgebra.:\(B::BlockDiagonal, vm::AbstractVecOrMat)
