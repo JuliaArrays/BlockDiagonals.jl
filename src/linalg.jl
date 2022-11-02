@@ -158,11 +158,11 @@ function _mul!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal, α::Number,
 end
 
 function LinearAlgebra.lmul!(B::LowerTriangular{<:Any,<:BlockDiagonal}, vm::StridedVecOrMat)
-    row_i = 1
     # BlockDiagonals with non-square blocks
     if !all(BlockDiagonals.is_square, blocks(parent(B)))
         return lmul!(LowerTriangular(Matrix(B)), vm) # Fallback on the generic LinearAlgebra method
     end
+    row_i = 1
     for block in blocks(parent(B))
         nrow = size(block, 1)
         @views lmul!(LowerTriangular(block), vm[row_i:(row_i + nrow - 1), :])
