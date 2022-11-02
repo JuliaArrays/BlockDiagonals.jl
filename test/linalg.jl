@@ -78,7 +78,7 @@ end
                 evals, evecs = eigen(Matrix(B))
 
                 @test E isa Eigen
-                @test Matrix(E) ≈ B 
+                @test Matrix(E) ≈ B
 
                 # There is no test like @test eigen(B) == eigen(Matrix(B))
                 # 1. this fails in the complex case. Probably a convergence thing that leads to ever so slight differences
@@ -88,7 +88,7 @@ end
                 @static if VERSION < v"1.2"
                     # pre-v1.2 we need to sort the eigenvalues consistently
                     # Since eigenvalues may be complex here, I use this function, which works for this test.
-                    # This test is already somewhat fragile w. r. t. degenerate eigenvalues 
+                    # This test is already somewhat fragile w. r. t. degenerate eigenvalues
                     # and this just makes this a little worse.
                     perm_bd = sortperm(real.(evals_bd) + 100*imag.(evals_bd))
                     evals_bd = evals_bd[perm_bd]
@@ -131,7 +131,7 @@ end
                     E = Eigen(block_vals, blocks(vecs)[i])
                     evals_bd, evecs_bd = E
                     evals, evecs = eigen(block)
-                    
+
                     @test block ≈ Matrix(E)
 
                     @static if VERSION < v"1.2"
@@ -144,7 +144,7 @@ end
                         evals = evals[perm]
                         evecs = evecs[:, perm]
                     end
-    
+
                     @test evals_bd ≈ evals
                     @test all(min.(abs.(evecs_bd - evecs), abs.(evecs_bd + evecs)) .< 1e-13)
                 end
@@ -245,6 +245,21 @@ end
             end
         end
     end  # SVD
+    @testset "Left multiplication" begin
+        N1 = 20
+        N2 = 8
+        N3 = 5
+        N4 = N1 + N3 - N2
+        A = BlockDiagonal([rand(rng, N1, N1), rand(rng, N2, N2)])
+        B = BlockDiagonal([rand(rng, N1, N2), rand(rng, N3, N4)])
+        x = rand(rng, N1 + N2)
+        y = rand(rng, N2 + N4)
+
+        @testset "Lower triangular" begin
+            @test lmul!(LowerTriangular(A), copy(x)) ≈ lmul!(LowerTriangular(Matrix(A)), x)
+            @test lmul!(LowerTriangular(B), copy(y)) ≈ lmul!(LowerTriangular(Matrix(B)), y)
+        end
+    end
     @testset "Left division" begin
         N1 = 20
         N2 = 8
