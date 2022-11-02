@@ -19,6 +19,8 @@ using Test
     b64 = BlockDiagonal([rand(rng, 2, 2), rand(rng, 2, 2)])
     b32 = BlockDiagonal([rand(rng, Float32, 2, 2), rand(rng, Float32, 2, 2)])
 
+    bns = BlockDiagonal([rand(rng, N1, N2), rand(rng, N2, N3), rand(rng, N3, N1)])
+
     @testset "Addition" begin
         @testset "BlockDiagonal + BlockDiagonal" begin
             @test b1 + b1 isa BlockDiagonal
@@ -58,6 +60,15 @@ using Test
             @test D + b1 isa BlockDiagonal
             @test D + b1 == D + Matrix(b1)
             @test_throws DimensionMismatch D′ + b1
+
+            # Non-square blocks
+            @test D + bns isa Matrix
+            @test D + bns == D + Matrix(bns)
+            @test_throws DimensionMismatch D′ + bns
+
+            @test bns + D isa Matrix
+            @test bns + D == D + Matrix(bns)
+            @test_throws DimensionMismatch bns + D′
         end
 
         @testset "BlockDiagonal + UniformScaling" begin
@@ -69,11 +80,11 @@ using Test
             @test 5I + b1 == 5I + Matrix(b1)
         end
     end  # Addition
-    
+
     @testset "Subtraction" begin
         @test -b1 isa BlockDiagonal
         @test b1 - b1 isa BlockDiagonal
-        
+
         @test -b1 == -Matrix(b1)
         @test b1 - b1 == Matrix(b1) - Matrix(b1)
         @test Matrix(b1) - b2 == Matrix(b1) - Matrix(b2)
