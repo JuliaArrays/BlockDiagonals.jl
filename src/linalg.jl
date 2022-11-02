@@ -45,7 +45,7 @@ end
 """
     eigen_blockwise(B::BlockDiagonal, args...; kwargs...) -> values, vectors
 
-Computes the eigendecomposition for each block separately and keeps the block diagonal 
+Computes the eigendecomposition for each block separately and keeps the block diagonal
 structure in the matrix of eigenvectors. Hence any parameters given are applied to each
 eigendecomposition separately, but there is e.g. no global sorting of eigenvalues.
 """
@@ -58,7 +58,7 @@ function eigen_blockwise(B::BlockDiagonal, args...; kwargs...)
     values = promote([e.values for e in eigens]...)
     vectors = promote([e.vectors for e in eigens]...)
     vcat(values...), BlockDiagonal([vectors...])
-end 
+end
 
 ## This function never keeps the block diagonal structure
 function LinearAlgebra.eigen(B::BlockDiagonal, args...; kwargs...)
@@ -66,8 +66,8 @@ function LinearAlgebra.eigen(B::BlockDiagonal, args...; kwargs...)
     vectors = Matrix(vectors) # always convert to avoid type instability (also it speeds up the permutation step)
     @static if VERSION > v"1.2.0-DEV.275"
         Eigen(LinearAlgebra.sorteig!(values, vectors, kwargs...)...)
-    else 
-        Eigen(values, vectors) 
+    else
+        Eigen(values, vectors)
     end
 end
 
@@ -155,6 +155,20 @@ function _mul!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal, α::Number,
     end
 
     return C
+end
+
+function LinearAlgebra.lmul!(B::LowerTriangular{<:Any,<:BlockDiagonal}, vm::StridedVecOrMat)
+    row_i = 1
+    # BlockDiagonals with non-square blocks
+    if !all(BlockDiagonals.is_square, blocks(parent(B)))
+        return lmul!(LowerTriangular(Matrix(B)), vm) # Fallback on the generic LinearAlgebra method
+    end
+    for block in blocks(parent(B))
+        nrow = size(block, 1)
+        @views lmul!(LowerTriangular(block), vm[row_i:(row_i + nrow - 1), :])
+        row_i += nrow
+    end
+    vm
 end
 
 function LinearAlgebra.:\(B::BlockDiagonal, vm::AbstractVecOrMat)
