@@ -42,8 +42,11 @@ function Base.:+(B::BlockDiagonal, M::StridedMatrix)
     return A
 end
 
-function Base.:+(B::BlockDiagonal, M::Diagonal)::BlockDiagonal
+function Base.:+(B::BlockDiagonal, M::Diagonal)
     size(B) == size(M) || throw(DimensionMismatch("dimensions must match"))
+    if !all(is_square, blocks(B))
+        return Matrix(B) + M # Fallback on the generic Base method
+    end
     A = copy(B)
     d = diag(M)
     row = 1
