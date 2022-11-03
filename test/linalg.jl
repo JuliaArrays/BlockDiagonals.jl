@@ -260,7 +260,7 @@ end
             @test lmul!(LowerTriangular(A), copy(x)) ≈ lmul!(LowerTriangular(Matrix(A)), copy(x))
             @test lmul!(LowerTriangular(B), copy(y)) ≈ lmul!(LowerTriangular(Matrix(B)), copy(y))
             cx = copy(x)
-            @test 192 >= @ballocated lmul!($(LowerTriangular(A)), $cx)
+            @test 320 >= @ballocated lmul!($(LowerTriangular(A)), $cx)
         end
     end
     @testset "Left division" begin
