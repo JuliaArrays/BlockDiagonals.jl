@@ -1,3 +1,4 @@
+using BenchmarkTools
 using BlockDiagonals
 using BlockDiagonals: svd_blockwise, eigen_blockwise
 using LinearAlgebra
@@ -258,6 +259,8 @@ end
         @testset "Lower triangular" begin
             @test lmul!(LowerTriangular(A), copy(x)) ≈ lmul!(LowerTriangular(Matrix(A)), copy(x))
             @test lmul!(LowerTriangular(B), copy(y)) ≈ lmul!(LowerTriangular(Matrix(B)), copy(y))
+            cx = copy(x)
+            @test 2*192 > @ballocated lmul!($(LowerTriangular(A)), $cx) # give +100% leeway
         end
     end
     @testset "Left division" begin
