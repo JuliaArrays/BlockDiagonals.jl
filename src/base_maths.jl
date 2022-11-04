@@ -162,11 +162,11 @@ function Base.:*(M::Diagonal{T}, B::BlockDiagonal{T2})::BlockDiagonal where {T, 
     return A
 end
 
-function Base.:*(vt::Adjoint{T,<: AbstractVector}, B::BlockDiagonal{T}) where {T}
+function Base.:*(vt::Adjoint{T,<: AbstractVector}, B::BlockDiagonal{T2, V}) where V<:AbstractMatrix{T2} where {T, T2}
     return (B' * parent(vt))'
 end
 
-function Base.:*(vt::Transpose{T,<: AbstractVector}, B::BlockDiagonal{T}) where {T}
+function Base.:*(vt::Transpose{T,<: AbstractVector}, B::BlockDiagonal{T2, V}) where V<:AbstractMatrix{T2} where {T, T2}
     return transpose(transpose(B) * parent(vt))
 end
 
