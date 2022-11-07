@@ -166,7 +166,7 @@ function Base.:*(vt::Adjoint{<:Any,<:AbstractVector}, B::BlockDiagonal)
     return (B' * parent(vt))'
 end
 
-function Base.:*(vt::Transpose{T,<: AbstractVector}, B::BlockDiagonal{T2, V}) where V<:AbstractMatrix{T2} where {T, T2}
+function Base.:*(vt::Transpose{<:Any,<:AbstractVector}, B::BlockDiagonal)
     return transpose(transpose(B) * parent(vt))
 end
 
