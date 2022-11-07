@@ -162,7 +162,7 @@ function Base.:*(M::Diagonal{T}, B::BlockDiagonal{T2})::BlockDiagonal where {T, 
     return A
 end
 
-function Base.:*(vt::Adjoint{T,<: AbstractVector}, B::BlockDiagonal{T2, V}) where V<:AbstractMatrix{T2} where {T, T2}
+function Base.:*(vt::Adjoint{<:Any,<:AbstractVector}, B::BlockDiagonal)
     return (B' * parent(vt))'
 end
 
