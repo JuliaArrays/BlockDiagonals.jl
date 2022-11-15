@@ -22,6 +22,7 @@ using Test
     bi = BlockDiagonal([zeros(Int, N1, N1), zeros(Int, N2, N2), zeros(Int, N3, N3)])
 
     bns = BlockDiagonal([rand(rng, N1, N2), rand(rng, N2, N3), rand(rng, N3, N1)])
+    C = rand(rng, N, N)
 
     @testset "Addition" begin
         @testset "BlockDiagonal + BlockDiagonal" begin
@@ -38,6 +39,7 @@ using Test
             # Test on non-square blocks
             # https://github.com/invenia/BlockDiagonals.jl/issues/124
             @test bns + Matrix(bns) == Matrix(bns) + Matrix(bns)
+            @test bns + C == Matrix(bns) + C
 
             # Matrix + BlockDiagonal
             @test Matrix(b1) + b1 isa Matrix
