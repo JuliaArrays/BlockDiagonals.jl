@@ -19,6 +19,8 @@ using Test
     b64 = BlockDiagonal([rand(rng, 2, 2), rand(rng, 2, 2)])
     b32 = BlockDiagonal([rand(rng, Float32, 2, 2), rand(rng, Float32, 2, 2)])
 
+    bi = BlockDiagonal([zeros(Int, N1, N1), zeros(Int, N2, N2), zeros(Int, N3, N3)])
+
     bns = BlockDiagonal([rand(rng, N1, N2), rand(rng, N2, N3), rand(rng, N3, N1)])
 
     @testset "Addition" begin
@@ -120,6 +122,8 @@ using Test
             @test transpose(a) * b1 isa Transpose{<:Number, <:Vector}
             @test a' * b1 ≈ a' * Matrix(b1)
             @test transpose(a) * b1 ≈ transpose(a) * Matrix(b1)
+            # Method ambiguity with different eltypes https://github.com/invenia/BlockDiagonals.jl/issues/91
+            @test a' * bi isa Adjoint{<:Number, <:Vector}
         end
 
         @testset "BlockDiagonal * Matrix" begin
