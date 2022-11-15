@@ -33,11 +33,14 @@ function Base.:+(B::BlockDiagonal, M::StridedMatrix)
     end
     A = copy(M)
     row = 1
-    for (j, block) in enumerate(blocks(B))
-        nrows = size(block, 1)
-        rows = row:(row + nrows-1)
-        A[rows, rows] .+= block
+    col = 1
+    for block in blocks(B)
+        nrows, ncols = size(block)
+        rows = row:(row + nrows - 1)
+        cols = col:(col + ncols - 1)
+        A[rows, cols] .+= block
         row += nrows
+        col += ncols
     end
     return A
 end
