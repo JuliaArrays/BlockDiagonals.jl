@@ -122,7 +122,7 @@ using Test
             @test transpose(a) * b1 isa Transpose{<:Number, <:Vector}
             @test a' * b1 ≈ a' * Matrix(b1)
             @test transpose(a) * b1 ≈ transpose(a) * Matrix(b1)
-            # Method ambiguity bug https://github.com/invenia/BlockDiagonals.jl/issues/91
+            # Method ambiguity with different eltypes https://github.com/invenia/BlockDiagonals.jl/issues/91
             @test a' * bi isa Adjoint{<:Number, <:Vector}
         end
 
