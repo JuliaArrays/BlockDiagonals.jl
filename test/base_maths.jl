@@ -35,6 +35,10 @@ using Test
             @test b1 + Matrix(b1) == b1 + b1
             @test_throws DimensionMismatch b1 + Matrix(b3)
 
+            # Test on non-square blocks
+            # https://github.com/invenia/BlockDiagonals.jl/issues/124
+            @test bns + Matrix(bns) == Matrix(bns) + Matrix(bns)
+
             # Matrix + BlockDiagonal
             @test Matrix(b1) + b1 isa Matrix
             @test Matrix(b1) + b1 == b1 + b1
