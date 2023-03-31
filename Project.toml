@@ -12,7 +12,7 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 [compat]
 ChainRulesCore = "1"
 ChainRulesTestUtils = "1"
-FillArrays = "0.6, 0.7, 0.8, 0.9, 0.10, 0.11, 0.12, 0.13"
+FillArrays = "0.6, 0.7, 0.8, 0.9, 0.10, 0.11, 0.12, 0.13, 1"
 FiniteDifferences = "0.12.3"
 PDMats = "0.11"
 julia = "1"
