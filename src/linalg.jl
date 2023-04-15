@@ -138,18 +138,16 @@ if VERSION ≥ v"1.3"
 end
 
 function _mul!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal)
-    isequal_blocksizes(A, B) || throw(DimensionMismatch("A and B have different block sizes"))
-    isequal_blocksizes(C, A) || throw(DimensionMismatch("C has incompatible block sizes"))
+    can_block_multiply(C,A,B) || throw(DimensionMismatch("A has blocksizes $(blocksizes(A)), B has blocksizes $(blocksizes(B)), C has blocksizes $(blocksizes(C))"))
     for i in eachindex(blocks(C))
         @inbounds LinearAlgebra.mul!(C.blocks[i], A.blocks[i], B.blocks[i])
     end
 
     return C
 end
-
+#
 function _mul!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal, α::Number, β::Number)
-    isequal_blocksizes(A, B) || throw(DimensionMismatch("A and B have different block sizes"))
-    isequal_blocksizes(C, A) || throw(DimensionMismatch("C has incompatible block sizes"))
+    can_block_multiply(C,A,B) || throw(DimensionMismatch("A has blocksizes $(blocksizes(A)), B has blocksizes $(blocksizes(B)), C has blocksizes $(blocksizes(C))"))
     for i in eachindex(blocks(C))
         @inbounds LinearAlgebra.mul!(C.blocks[i], A.blocks[i], B.blocks[i], α, β)
     end
