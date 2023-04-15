@@ -183,6 +183,11 @@ using Test
             # Dimension check
             @test sum(size.(b4.blocks, 1)) == size(b4 * b5, 1)
             @test sum(size.(b5.blocks, 2)) == size(b4 * b5, 2)
+
+            b6 = BlockDiagonal([ones(4, 2), 2 * ones(2, 4)])
+            @test b4 * b6 isa BlockDiagonal
+            @test sum(size.(b4.blocks, 1)) == size(b4 * b6, 1)
+            @test sum(size.(b6.blocks, 2)) == size(b4 * b6, 2)
         end
     end  # Multiplication
 end
