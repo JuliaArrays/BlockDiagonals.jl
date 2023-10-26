@@ -6,11 +6,33 @@ function Base.isapprox(B::BlockDiagonal, M::AbstractMatrix; kwargs...)::Bool
 end
 
 function Base.isapprox(B1::BlockDiagonal, B2::BlockDiagonal; kwargs...)
-    return isequal_blocksizes(B1, B2) && all(isapprox.(blocks(B1), blocks(B2); kwargs...))
+    return isequal_blocksizes(B1, B2) && all(isapprox(b1,b2; kwargs...) for (b1,b2) in zip(blocks(B1), blocks(B2)))
 end
 
-function isequal_blocksizes(B1::BlockDiagonal, B2::BlockDiagonal)::Bool
-    return size(B1) == size(B2) && blocksizes(B1) == blocksizes(B2)
+function isequal_blocksizes(B1::BlockDiagonal, B2::BlockDiagonal)::Bool 
+    length(blocks(B1)) == length(blocks(B2)) || return false
+    for (b1, b2) in zip(blocks(B1), blocks(B2))
+        size(b1) == size(b2) || return false
+    end
+    return true
+end
+
+function can_block_multiply(B1::BlockDiagonal, B2::BlockDiagonal)::Bool
+    length(blocks(B1)) == length(blocks(B2)) || return false
+    for (b1, b2) in zip(blocks(B1), blocks(B2))
+        size(b1, 2) == size(b2, 1) || return false
+    end
+    return true
+end
+
+function can_block_multiply(C::BlockDiagonal, A::BlockDiagonal,B::BlockDiagonal)::Bool
+    length(blocks(C)) == length(blocks(A)) == length(blocks(B)) || return false
+    for (c, a, b) in zip(blocks(C), blocks(A), blocks(B))
+        size(c, 1) == size(a, 1) && 
+        size(c, 2) == size(b, 2) && 
+        size(a, 2) == size(b, 1) || return false
+    end
+    return true
 end
 
 ## Addition
@@ -81,7 +103,7 @@ Base.:*(B::BlockDiagonal, n::Number) = BlockDiagonal(n .* blocks(B))
 
 # TODO make type stable, maybe via Broadcasting?
 function Base.:*(B1::BlockDiagonal, B2::BlockDiagonal)
-    if isequal_blocksizes(B1, B2)
+    if can_block_multiply(B1, B2)
         return BlockDiagonal(blocks(B1) .* blocks(B2))
     else
         return Matrix(B1) * Matrix(B2)

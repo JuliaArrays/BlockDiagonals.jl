@@ -1,5 +1,5 @@
 using BlockDiagonals
-using BlockDiagonals: isequal_blocksizes
+using BlockDiagonals: isequal_blocksizes, can_block_multiply
 using Random
 using Test
 
@@ -75,6 +75,15 @@ using Test
         @test isequal_blocksizes(b1, b1) == true
         @test isequal_blocksizes(b1, similar(b1)) == true
         @test isequal_blocksizes(b1, b2) == false
+    end
+
+    @testset "can_block_multiply" begin
+        @test can_block_multiply(b1, b1) == true
+        @test can_block_multiply(b1, b2) == false
+
+        @test can_block_multiply(b1, b1, b1) == true
+        @test can_block_multiply(b1, b1, b2) == false
+        @test can_block_multiply(b2, b1, b1) == false
     end
 
     @testset "blocks size" begin
