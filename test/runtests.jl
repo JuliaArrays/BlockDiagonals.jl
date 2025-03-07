@@ -15,6 +15,3 @@ push!(ChainRulesTestUtils.TRANSFORMS_TO_ALT_TANGENTS, x -> @thunk(x))
     include("linalg.jl")
     include("chainrules.jl")
 end  # tests
-
-#
-#tests
