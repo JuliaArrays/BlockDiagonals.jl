@@ -124,12 +124,12 @@ using Test
             @test b64 * rand(Float32, 4) isa Vector{Float64}
         end
         @testset "Vector^T * BlockDiagonal" begin
-            @test a' * b1 isa Adjoint{<:Number, <:Vector}
-            @test transpose(a) * b1 isa Transpose{<:Number, <:Vector}
+            @test a' * b1 isa Adjoint{<:Number,<:Vector}
+            @test transpose(a) * b1 isa Transpose{<:Number,<:Vector}
             @test a' * b1 ≈ a' * Matrix(b1)
             @test transpose(a) * b1 ≈ transpose(a) * Matrix(b1)
             # Method ambiguity with different eltypes https://github.com/invenia/BlockDiagonals.jl/issues/91
-            @test a' * bi isa Adjoint{<:Number, <:Vector}
+            @test a' * bi isa Adjoint{<:Number,<:Vector}
         end
 
         @testset "BlockDiagonal * Matrix" begin
@@ -175,11 +175,11 @@ using Test
         end
 
         @testset "Non-Square BlockDiagonal * Non-Square BlockDiagonal" begin
-    	    b4 = BlockDiagonal([ones(2, 4), 2 * ones(3, 2)])
+            b4 = BlockDiagonal([ones(2, 4), 2 * ones(3, 2)])
             b5 = BlockDiagonal([3 * ones(2, 2), 2 * ones(4, 1)])
 
             @test b4 * b5 isa Array
-            @test b4 * b5 == [6 * ones(2, 2) 4 * ones(2, 1); zeros(3, 2) 8 * ones(3, 1)]
+            @test b4 * b5 == [6*ones(2, 2) 4*ones(2, 1); zeros(3, 2) 8*ones(3, 1)]
             # Dimension check
             @test sum(size.(b4.blocks, 1)) == size(b4 * b5, 1)
             @test sum(size.(b5.blocks, 2)) == size(b4 * b5, 2)
