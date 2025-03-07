@@ -2,7 +2,7 @@
     @testset "BlockDiagonal" begin
         x = [randn(1, 2), randn(2, 2)]
         test_rrule(BlockDiagonal, x)
-        test_rrule(BlockDiagonal, x; output_tangent=Tangent{BlockDiagonal}(;blocks=x))
+        test_rrule(BlockDiagonal, x; output_tangent = Tangent{BlockDiagonal}(; blocks = x))
 
         b = BlockDiagonal(x)
         m = Matrix(b)
@@ -16,7 +16,7 @@
     @testset "Matrix" begin
         D = BlockDiagonal([randn(2, 2), randn(2, 2)])
         test_rrule(Matrix, D)
-        test_rrule(Matrix, D, output_tangent=UpperTriangular(rand(4, 4)))
+        test_rrule(Matrix, D, output_tangent = UpperTriangular(rand(4, 4)))
     end
 
     @testset "BlockDiagonal * Vector" begin
