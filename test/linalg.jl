@@ -40,7 +40,8 @@ end
 
     @testset "Unary Linear Algebra" begin
         nonsquare = (adjoint, diag, pinv, svdvals, transpose)
-        @testset "$f" for f in (adjoint, det, diag, eigvals, inv, pinv, svdvals, transpose, tr)
+        @testset "$f" for f in
+                          (adjoint, det, diag, eigvals, inv, pinv, svdvals, transpose, tr)
             @test f(b1) ≈ f(Matrix(b1))
             if f in nonsquare
                 @test f(b_nonsq) ≈ f(Matrix(b_nonsq))
@@ -50,11 +51,11 @@ end
         @testset "permute=$p, scale=$s" for p in (true, false), s in (true, false)
             @testset "$g" for g in (eigmin, eigmax)
                 # `b2` has real eigenvals, required for `eigmin`, `b1` has Complex eigenvals
-                @test g(b2; permute=p, scale=s) ≈ g(Matrix(b2); permute=p, scale=s)
+                @test g(b2; permute = p, scale = s) ≈ g(Matrix(b2); permute = p, scale = s)
             end
             @testset "eigvals" begin
-                result = eigvals(b2; permute=p, scale=s)
-                expected = eigvals(Matrix(b2), permute=p, scale=s)
+                result = eigvals(b2; permute = p, scale = s)
+                expected = eigvals(Matrix(b2), permute = p, scale = s)
                 @static if VERSION < v"1.2"
                     # the `eigvals` method we hit above did not sort real eigenvalues pre-v1.2
                     # but some `eigvals` methods did, so we always sort real eigenvalues.
@@ -74,7 +75,11 @@ end
 
         @testset "Eigen Decomposition" begin
 
-            @testset "eigen $name" for (name, B) in [("", b1), ("symmetric", Symmetric(b1)), ("hermitian", Hermitian(b1))]
+            @testset "eigen $name" for (name, B) in [
+                ("", b1),
+                ("symmetric", Symmetric(b1)),
+                ("hermitian", Hermitian(b1)),
+            ]
                 E = eigen(B)
                 evals_bd, evecs_bd = E
                 evals, evecs = eigen(Matrix(B))
@@ -92,11 +97,11 @@ end
                     # Since eigenvalues may be complex here, I use this function, which works for this test.
                     # This test is already somewhat fragile w. r. t. degenerate eigenvalues
                     # and this just makes this a little worse.
-                    perm_bd = sortperm(real.(evals_bd) + 100*imag.(evals_bd))
+                    perm_bd = sortperm(real.(evals_bd) + 100 * imag.(evals_bd))
                     evals_bd = evals_bd[perm_bd]
                     evecs_bd = evecs_bd[:, perm_bd]
 
-                    perm = sortperm(real.(evals) + 100*imag.(evals))
+                    perm = sortperm(real.(evals) + 100 * imag.(evals))
                     evals = evals[perm]
                     evecs = evecs[:, perm]
                 end
@@ -109,7 +114,11 @@ end
                 @test all(min.(abs.(evecs_bd - evecs), abs.(evecs_bd + evecs)) .< 1e-13)
             end
 
-            @testset "eigen_blockwise $name" for (name, B) in [("", b1), ("symmetric", Symmetric(b1)), ("hermitian", Hermitian(b1))]
+            @testset "eigen_blockwise $name" for (name, B) in [
+                ("", b1),
+                ("symmetric", Symmetric(b1)),
+                ("hermitian", Hermitian(b1)),
+            ]
                 vals, vecs = eigen_blockwise(B)
 
                 # check types. Eltype varies so not checked here (should be ComplexF64, Float64, Float64)
@@ -123,9 +132,9 @@ end
                 # check by block
                 cumulative_size = 0
                 for (i, block) in enumerate(blocks(B))
-                    block_vals = vals[cumulative_size+1:cumulative_size+size(block,1)]
+                    block_vals = vals[cumulative_size+1:cumulative_size+size(block, 1)]
                     cumulative_size += size(block, 1)
-                   
+
                     # from here on the code parallel to the test code above
                     E = Eigen(block_vals, blocks(vecs)[i])
                     evals_bd, evecs_bd = E
@@ -135,11 +144,11 @@ end
 
                     @static if VERSION < v"1.2"
                         # sorting if needed
-                        perm_bd = sortperm(real.(evals_bd) + 100*imag.(evals_bd))
+                        perm_bd = sortperm(real.(evals_bd) + 100 * imag.(evals_bd))
                         evals_bd = evals_bd[perm_bd]
                         evecs_bd = evecs_bd[:, perm_bd]
 
-                        perm = sortperm(real.(evals) + 100*imag.(evals))
+                        perm = sortperm(real.(evals) + 100 * imag.(evals))
                         evals = evals[perm]
                         evecs = evecs[:, perm]
                     end
@@ -152,7 +161,7 @@ end
 
         @testset "eigvals on LinearAlgebra types" begin
             # `eigvals` has different methods for different types, e.g. Hermitian
-            b_herm = BlockDiagonal([Hermitian(rand(rng, 3, 3) + I) for _ in 1:3])
+            b_herm = BlockDiagonal([Hermitian(rand(rng, 3, 3) + I) for _ = 1:3])
             @test eigvals(b_herm) ≈ eigvals(Matrix(b_herm))
             @test eigvals(b_herm, 1.0, 2.0) ≈ eigvals(Hermitian(Matrix(b_herm)), 1.0, 2.0)
         end
@@ -164,23 +173,27 @@ end
         end
     end  # Unary
     @testset "Cholesky decomposition" begin
-        X = [  4  12 -16
-              12  37 -43
-             -16 -43  98]
-        U = [ 2.0 6.0 -8.0
-              0.0 1.0  5.0
-              0.0 0.0  3.0]
+        X = [
+            4 12 -16
+            12 37 -43
+            -16 -43 98
+        ]
+        U = [
+            2.0 6.0 -8.0
+            0.0 1.0 5.0
+            0.0 0.0 3.0
+        ]
 
         BD = BlockDiagonal([X, X])
         C = cholesky(BD)
-        @test C isa Cholesky{Float64, <:BlockDiagonal{Float64}}
+        @test C isa Cholesky{Float64,<:BlockDiagonal{Float64}}
         @test C.U ≈ cholesky(Matrix(BD)).U
         @test C.U ≈ BlockDiagonal([U, U])
         @test C.L ≈ BlockDiagonal([U', U'])
         @test C.UL ≈ C.U
         @test C.uplo === 'U'
         @test C.info == 0
-        @test typeof(C) == Cholesky{Float64, BlockDiagonal{Float64, Matrix{Float64}}}
+        @test typeof(C) == Cholesky{Float64,BlockDiagonal{Float64,Matrix{Float64}}}
         @test PDMat(cholesky(BD)) == PDMat(cholesky(Matrix(BD)))
 
         M = BlockDiagonal(map(Matrix, blocks(C.L)))
@@ -191,7 +204,7 @@ end
         @test C.UL ≈ C.L
         @test C.uplo === 'L'
         @test C.info == 0
-        @test typeof(C) == Cholesky{Float64, BlockDiagonal{Float64, Matrix{Float64}}}
+        @test typeof(C) == Cholesky{Float64,BlockDiagonal{Float64,Matrix{Float64}}}
 
         # we didn't think we needed to support this, but #109
         d = Diagonal(rand(5))
@@ -199,26 +212,28 @@ end
         @test cholesky(s1).U == cholesky(d).U
     end  # Cholesky
     @testset "Singular Value Decomposition" begin
-        X = [  4  12 -16
-              12  37 -43
-             -16 -43  98]
+        X = [
+            4 12 -16
+            12 37 -43
+            -16 -43 98
+        ]
         BD = BlockDiagonal([X, X])
 
         @testset "full=$full" for full in (true, false)
 
             @testset "svd_blockwise" begin
-                U, S, Vt = svd_blockwise(BD; full=full)
+                U, S, Vt = svd_blockwise(BD; full = full)
                 F = SVD(U, S, Vt)
                 @test BD ≈ F.U * Diagonal(F.S) * F.Vt
 
                 # Matrices should be BlockDiagonal
-                @test F isa SVD{Float64, Float64, <:BlockDiagonal{Float64}}
+                @test F isa SVD{Float64,Float64,<:BlockDiagonal{Float64}}
                 @test F.U isa BlockDiagonal
                 @test F.V isa BlockDiagonal
                 @test F.Vt isa BlockDiagonal
 
                 # Should have same values, but not sorted so as to keep BlockDiagonal structure
-                F_ = svd(Matrix(BD), full=full)
+                F_ = svd(Matrix(BD), full = full)
                 for fname in fieldnames(SVD)
                     @test sort(vec(getfield(F, fname))) ≈ sort(vec(getfield(F_, fname)))
                 end
@@ -228,8 +243,8 @@ end
             end
 
             @testset "svd" begin
-                F = svd(BD; full=full)
-                F_ = svd(Matrix(BD), full=full)
+                F = svd(BD; full = full)
+                F_ = svd(Matrix(BD), full = full)
 
                 @test F isa SVD
                 @test BD ≈ F.U * Diagonal(F.S) * F.Vt
@@ -240,7 +255,7 @@ end
                 end
 
                 # Singular values should be sorted in descending order
-                @test F.S == sort(F.S, rev=true)
+                @test F.S == sort(F.S, rev = true)
             end
         end
     end  # SVD
@@ -255,8 +270,10 @@ end
         y = rand(rng, N2 + N4)
 
         @testset "Lower triangular" begin
-            @test lmul!(LowerTriangular(A), copy(x)) ≈ lmul!(LowerTriangular(Matrix(A)), copy(x))
-            @test lmul!(LowerTriangular(B), copy(y)) ≈ lmul!(LowerTriangular(Matrix(B)), copy(y))
+            @test lmul!(LowerTriangular(A), copy(x)) ≈
+                  lmul!(LowerTriangular(Matrix(A)), copy(x))
+            @test lmul!(LowerTriangular(B), copy(y)) ≈
+                  lmul!(LowerTriangular(Matrix(B)), copy(y))
             cx = copy(x)
             @test 320 >= @ballocated lmul!($(LowerTriangular(A)), $cx)
         end

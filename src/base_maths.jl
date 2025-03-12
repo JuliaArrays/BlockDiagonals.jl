@@ -36,8 +36,8 @@ function Base.:+(B::BlockDiagonal, M::StridedMatrix)
     col = 1
     for block in blocks(B)
         nrows, ncols = size(block)
-        rows = row:(row + nrows - 1)
-        cols = col:(col + ncols - 1)
+        rows = row:(row+nrows-1)
+        cols = col:(col+ncols-1)
         A[rows, cols] .+= block
         row += nrows
         col += ncols
@@ -55,7 +55,7 @@ function Base.:+(B::BlockDiagonal, M::Diagonal)
     row = 1
     for (p, block) in enumerate(blocks(B))
         nrows = size(block, 1)
-        rows = row:(row + nrows-1)
+        rows = row:(row+nrows-1)
         for (i, r) in enumerate(rows)
             getblock(A, p)[i, i] += d[r]
         end
@@ -71,9 +71,9 @@ end
 
 ## Subtraction
 Base.:-(B::BlockDiagonal) = BlockDiagonal(.-(blocks(B)))
-Base.:-(M::AbstractMatrix, B::BlockDiagonal) =  M + -B
-Base.:-(B::BlockDiagonal, M::AbstractMatrix) =  -M + B
-Base.:-(B::BlockDiagonal, B2::BlockDiagonal) =  B + (-B2)
+Base.:-(M::AbstractMatrix, B::BlockDiagonal) = M + -B
+Base.:-(B::BlockDiagonal, M::AbstractMatrix) = -M + B
+Base.:-(B::BlockDiagonal, B2::BlockDiagonal) = B + (-B2)
 
 ## Multiplication
 Base.:*(n::Number, B::BlockDiagonal) = B * n
@@ -90,9 +90,9 @@ end
 
 function _check_matmul_dims(A::AbstractMatrix, B::AbstractVecOrMat)
     # match error message from LinearAlgebra
-    size(A, 2) == size(B, 1) || throw(DimensionMismatch(
-        "A has dimensions $(size(A)) but B has dimensions $(size(B))"
-    ))
+    size(A, 2) == size(B, 1) || throw(
+        DimensionMismatch("A has dimensions $(size(A)) but B has dimensions $(size(B))"),
+    )
 end
 
 _mulblocksizes(bblocks, ::AbstractVector) = size.(bblocks, 1)
@@ -104,7 +104,7 @@ end
 Base.:*(B::BlockDiagonal, x::AbstractVector) = _mul(B, x)
 Base.:*(B::BlockDiagonal, X::AbstractMatrix) = _mul(B, X)
 
-function _mul(B::BlockDiagonal{T}, x::AbstractVecOrMat{T2}) where {T, T2}
+function _mul(B::BlockDiagonal{T}, x::AbstractVecOrMat{T2}) where {T,T2}
     _check_matmul_dims(B, x)
     bblocks = blocks(B)
     new_blocksizes = _mulblocksizes(bblocks, x)
@@ -118,7 +118,7 @@ function _mul(B::BlockDiagonal{T}, x::AbstractVecOrMat{T2}) where {T, T2}
     return reduce(vcat, d)
 end
 
-function Base.:*(M::AbstractMatrix{T}, B::BlockDiagonal{T2}) where {T, T2}
+function Base.:*(M::AbstractMatrix{T}, B::BlockDiagonal{T2}) where {T,T2}
     _check_matmul_dims(M, B)
     bblocks = blocks(B)
     new_blocksizes = zip(fill(size(M, 1), length(bblocks)), size.(bblocks, 2))
@@ -133,14 +133,14 @@ function Base.:*(M::AbstractMatrix{T}, B::BlockDiagonal{T2}) where {T, T2}
 end
 
 # Diagonal
-function Base.:*(B::BlockDiagonal{T}, M::Diagonal{T2})::BlockDiagonal where {T, T2}
+function Base.:*(B::BlockDiagonal{T}, M::Diagonal{T2})::BlockDiagonal where {T,T2}
     _check_matmul_dims(B, M)
     A = similar(B, promote_type(T, T2))
     d = parent(M)
     col = 1
     @inbounds @views for (p, block) in enumerate(blocks(B))
         ncols = size(block, 2)
-        cols = col:(col + ncols-1)
+        cols = col:(col+ncols-1)
         for (j, c) in enumerate(cols)
             mul!(getblock(A, p)[:, j], block[:, j], d[c])
         end
@@ -149,14 +149,14 @@ function Base.:*(B::BlockDiagonal{T}, M::Diagonal{T2})::BlockDiagonal where {T, 
     return A
 end
 
-function Base.:*(M::Diagonal{T}, B::BlockDiagonal{T2})::BlockDiagonal where {T, T2}
+function Base.:*(M::Diagonal{T}, B::BlockDiagonal{T2})::BlockDiagonal where {T,T2}
     _check_matmul_dims(M, B)
     A = similar(B, promote_type(T, T2))
     d = parent(M)
     row = 1
     @inbounds @views for (p, block) in enumerate(blocks(B))
         nrows = size(block, 1)
-        rows = row:(row + nrows-1)
+        rows = row:(row+nrows-1)
         for (i, r) in enumerate(rows)
             mul!(getblock(A, p)[i, :], block[i, :], d[r])
         end
