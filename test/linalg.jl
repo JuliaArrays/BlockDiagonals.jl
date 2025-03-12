@@ -2,7 +2,7 @@ using BenchmarkTools
 using BlockDiagonals
 using BlockDiagonals: svd_blockwise, eigen_blockwise
 using LinearAlgebra
-using Random
+using StableRNGs
 using Test
 
 # piracy to make SVD approximate comparisons easier
@@ -11,11 +11,12 @@ function Base.isapprox(a::SVD, b::SVD)
 end
 
 @testset "linalg.jl" begin
-    rng = MersenneTwister(123456)
+    rng = StableRNG(697)
     N1, N2, N3 = 3, 4, 5
     N = N1 + N2 + N3
     b1 = BlockDiagonal([rand(rng, N1, N1), rand(rng, N2, N2), rand(rng, N3, N3)])
     b2 = BlockDiagonal([rand(rng, N1, N1), rand(rng, N3, N3), rand(rng, N2, N2)])
+    b2 = b2 + b2' # because we need real eigenvalues for the tests involving b2
     b3 = BlockDiagonal([rand(rng, N1, N1), rand(rng, N2, N2), rand(rng, N2, N2)])
     b_nonsq = BlockDiagonal([rand(rng, N1, N2), rand(rng, N2, N1)])
     A = rand(rng, N, N + N1)
@@ -124,10 +125,7 @@ end
                 for (i, block) in enumerate(blocks(B))
                     block_vals = vals[cumulative_size+1:cumulative_size+size(block,1)]
                     cumulative_size += size(block, 1)
-                    # adapt eltype to the same to block_vals.
-                    # block_vals's eltype is chosen to be compatible across all eigenvalues, thus it might be different
-                    block = convert.(eltype(block_vals), block)
-
+                   
                     # from here on the code parallel to the test code above
                     E = Eigen(block_vals, blocks(vecs)[i])
                     evals_bd, evecs_bd = E
