@@ -10,7 +10,8 @@ LinearAlgebra.logdet(B::BlockDiagonal) = sum(logdet, blocks(B))
 LinearAlgebra.tr(B::BlockDiagonal) = sum(tr, blocks(B))
 
 for f in (:Symmetric, :Hermitian)
-    @eval LinearAlgebra.$f(B::BlockDiagonal, uplo::Symbol=:U) = BlockDiagonal([$f(block, uplo) for block in blocks(B)])
+    @eval LinearAlgebra.$f(B::BlockDiagonal, uplo::Symbol = :U) =
+        BlockDiagonal([$f(block, uplo) for block in blocks(B)])
 end
 
 # Real matrices can have Complex eigenvalues; `eigvals` is not type stable.
@@ -23,7 +24,10 @@ end
 else
     # Sorting was introduced in Julia v1.2 by https://github.com/JuliaLang/julia/pull/21598
     function LinearAlgebra.eigvals(
-        B::BlockDiagonal, args...; sortby::Union{Function, Nothing}=LinearAlgebra.eigsortby, kwargs...
+        B::BlockDiagonal,
+        args...;
+        sortby::Union{Function,Nothing} = LinearAlgebra.eigsortby,
+        kwargs...,
     )
         vals = mapreduce(b -> eigvals(b, args...; kwargs...), vcat, blocks(B))
         return LinearAlgebra.sorteig!(vals, sortby)
@@ -76,19 +80,19 @@ svdvals_blockwise(B::BlockDiagonal) = mapreduce(svdvals, vcat, blocks(B))
 function LinearAlgebra.svdvals(B::BlockDiagonal)
     # if all the blocks are squares
     if all(map(t -> t[1] == t[2], blocksizes(B)))
-        return sort!(svdvals_blockwise(B); rev=true)
+        return sort!(svdvals_blockwise(B); rev = true)
     else
         return svdvals(Matrix(B))
     end
 end
 
 # `B = U * Diagonal(S) * Vt` with `U` and `Vt` `BlockDiagonal` (`S` only sorted block-wise).
-function svd_blockwise(B::BlockDiagonal{T}; full::Bool=false) where T
+function svd_blockwise(B::BlockDiagonal{T}; full::Bool = false) where {T}
     U = Matrix{float(T)}[]
     S = Vector{float(T)}()
     Vt = Matrix{float(T)}[]
     for b in blocks(B)
-        F = svd(b, full=full)
+        F = svd(b, full = full)
         push!(U, F.U)
         append!(S, F.S)
         push!(Vt, F.Vt)
@@ -96,11 +100,11 @@ function svd_blockwise(B::BlockDiagonal{T}; full::Bool=false) where T
     return BlockDiagonal(U), S, BlockDiagonal(Vt)
 end
 
-function LinearAlgebra.svd(B::BlockDiagonal; full::Bool=false)::SVD
-    U, S, Vt = svd_blockwise(B, full=full)
+function LinearAlgebra.svd(B::BlockDiagonal; full::Bool = false)::SVD
+    U, S, Vt = svd_blockwise(B, full = full)
     # Sort singular values in descending order by convention.
     # This means `U` and `Vt` will be `Matrix`s, not `BlockDiagonal`s.
-    p = sortperm(S, rev=true)
+    p = sortperm(S, rev = true)
     return SVD(U[:, p], S[p], Vt[p, :])
 end
 
@@ -113,7 +117,7 @@ end
 # where each block is an upper or lower triangular matrix. This ensures that optimizations
 # for BlockDiagonal matrices are preserved, though it comes at the cost of reallocating
 # a vector of triangular wrappers on each call.
-function Base.getproperty(C::Cholesky{T, <:BlockDiagonal{T}}, x::Symbol) where T
+function Base.getproperty(C::Cholesky{T,<:BlockDiagonal{T}}, x::Symbol) where {T}
     B = getfield(C, :factors)
     uplo = getfield(C, :uplo)
     f = if x === :U
@@ -132,13 +136,20 @@ end
 LinearAlgebra.mul!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal) = _mul!(C, A, B)
 
 if VERSION ≥ v"1.3"
-    function LinearAlgebra.mul!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal, α::Number, β::Number)
+    function LinearAlgebra.mul!(
+        C::BlockDiagonal,
+        A::BlockDiagonal,
+        B::BlockDiagonal,
+        α::Number,
+        β::Number,
+    )
         return _mul!(C, A, B, α, β)
     end
 end
 
 function _mul!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal)
-    isequal_blocksizes(A, B) || throw(DimensionMismatch("A and B have different block sizes"))
+    isequal_blocksizes(A, B) ||
+        throw(DimensionMismatch("A and B have different block sizes"))
     isequal_blocksizes(C, A) || throw(DimensionMismatch("C has incompatible block sizes"))
     for i in eachindex(blocks(C))
         @inbounds LinearAlgebra.mul!(C.blocks[i], A.blocks[i], B.blocks[i])
@@ -148,7 +159,8 @@ function _mul!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal)
 end
 
 function _mul!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal, α::Number, β::Number)
-    isequal_blocksizes(A, B) || throw(DimensionMismatch("A and B have different block sizes"))
+    isequal_blocksizes(A, B) ||
+        throw(DimensionMismatch("A and B have different block sizes"))
     isequal_blocksizes(C, A) || throw(DimensionMismatch("C has incompatible block sizes"))
     for i in eachindex(blocks(C))
         @inbounds LinearAlgebra.mul!(C.blocks[i], A.blocks[i], B.blocks[i], α, β)
@@ -166,7 +178,7 @@ function LinearAlgebra.lmul!(B::LowerTriangular{<:Any,<:BlockDiagonal}, vm::Stri
     row_i = 1
     for block in blocks(parent(B))
         nrow = size(block, 1)
-        @views lmul!(LowerTriangular(block), vm[row_i:(row_i + nrow - 1), :])
+        @views lmul!(LowerTriangular(block), vm[row_i:(row_i+nrow-1), :])
         row_i += nrow
     end
     return vm
@@ -181,7 +193,7 @@ function LinearAlgebra.:\(B::BlockDiagonal, vm::AbstractVecOrMat)
     result = similar(vm)
     for block in blocks(B)
         nrow = size(block, 1)
-        result[row_i:(row_i + nrow - 1), :] = block \ vm[row_i:(row_i + nrow - 1), :]
+        result[row_i:(row_i+nrow-1), :] = block \ vm[row_i:(row_i+nrow-1), :]
         row_i += nrow
     end
     return result

@@ -5,16 +5,16 @@
 
 A matrix with matrices on the diagonal, and zeros off the diagonal.
 """
-struct BlockDiagonal{T, V<:AbstractMatrix{T}} <: AbstractMatrix{T}
+struct BlockDiagonal{T,V<:AbstractMatrix{T}} <: AbstractMatrix{T}
     blocks::Vector{V}
 
-    function BlockDiagonal{T, V}(blocks::Vector{V}) where {T, V<:AbstractMatrix{T}}
-        return new{T, V}(blocks)
+    function BlockDiagonal{T,V}(blocks::Vector{V}) where {T,V<:AbstractMatrix{T}}
+        return new{T,V}(blocks)
     end
 end
 
-function BlockDiagonal(blocks::Vector{V}) where {T, V<:AbstractMatrix{T}}
-    return BlockDiagonal{T, V}(blocks)
+function BlockDiagonal(blocks::Vector{V}) where {T,V<:AbstractMatrix{T}}
+    return BlockDiagonal{T,V}(blocks)
 end
 
 BlockDiagonal(B::BlockDiagonal) = B
@@ -82,21 +82,24 @@ The total number of blocks in the matrix is `nblocks(B)^2`.
 nblocks(B::BlockDiagonal) = length(blocks(B))
 
 getblock(B::BlockDiagonal, p::Integer) = blocks(B)[p]
-function getblock(B::BlockDiagonal{T}, p::Integer, q::Integer) where T
+function getblock(B::BlockDiagonal{T}, p::Integer, q::Integer) where {T}
     return p == q ? blocks(B)[p] : Zeros{T}(blocksize(B, p, q))
 end
 
-function setblock!(B::BlockDiagonal{T, V}, v::V, p::Integer) where {T, V}
+function setblock!(B::BlockDiagonal{T,V}, v::V, p::Integer) where {T,V}
     if blocksize(B, p) != size(v)
-        throw(DimensionMismatch(
-            "Cannot set block of size $(blocksize(B, p)) to block of size $(size(v))."
-        ))
+        throw(
+            DimensionMismatch(
+                "Cannot set block of size $(blocksize(B, p)) to block of size $(size(v)).",
+            ),
+        )
     end
     return blocks(B)[p] = v
 end
 
-function setblock!(B::BlockDiagonal{T, V}, v::V, p::Int, q::Int) where {T, V}
-    p == q || throw(ArgumentError("Cannot set off-diagonal block ($p, $q) to non-zero value."))
+function setblock!(B::BlockDiagonal{T,V}, v::V, p::Int, q::Int) where {T,V}
+    p == q ||
+        throw(ArgumentError("Cannot set off-diagonal block ($p, $q) to non-zero value."))
     return setblock!(B, v, p)
 end
 
@@ -110,8 +113,8 @@ function Base.Matrix(B::BlockDiagonal{T}) where {T}
     col_idxs = cumsum(ncols) .- ncols .+ 1
 
     for n in eachindex(blocks(B))
-        block_rows = row_idxs[n]:(row_idxs[n] + nrows[n] - 1)
-        block_cols = col_idxs[n]:(col_idxs[n] + ncols[n] - 1)
+        block_rows = row_idxs[n]:(row_idxs[n]+nrows[n]-1)
+        block_cols = col_idxs[n]:(col_idxs[n]+ncols[n]-1)
         A[block_rows, block_cols] .= blocks(B)[n]
     end
     return A
@@ -126,15 +129,17 @@ Base.collect(B::BlockDiagonal) = Matrix(B)
         if isempty(blocks(B))
             return 0, 0
         else
-            return sum(first∘size, blocks(B)), sum(last∘size, blocks(B))
+            return sum(first ∘ size, blocks(B)), sum(last ∘ size, blocks(B))
         end
     end
 else
-   Base.size(B::BlockDiagonal) = sum(first∘size, blocks(B); init=0), sum(last∘size, blocks(B); init=0)
+    Base.size(B::BlockDiagonal) =
+        sum(first ∘ size, blocks(B); init = 0), sum(last ∘ size, blocks(B); init = 0)
 end
 
 Base.similar(B::BlockDiagonal) = BlockDiagonal(map(similar, blocks(B)))
-Base.similar(B::BlockDiagonal, ::Type{T}) where T = BlockDiagonal(map(b -> similar(b, T), blocks(B)))
+Base.similar(B::BlockDiagonal, ::Type{T}) where {T} =
+    BlockDiagonal(map(b -> similar(b, T), blocks(B)))
 Base.parent(B::BlockDiagonal) = B.blocks
 
 @propagate_inbounds function Base.setindex!(B::BlockDiagonal, v, i::Integer, j::Integer)
@@ -142,22 +147,28 @@ Base.parent(B::BlockDiagonal) = B.blocks
     if p > 0
         @inbounds getblock(B, p)[i_, end+j_] = v
     elseif !iszero(v)
-        throw(ArgumentError(
-            "Cannot set entry ($i, $j) in off-diagonal-block to nonzero value $v."
-        ))
+        throw(
+            ArgumentError(
+                "Cannot set entry ($i, $j) in off-diagonal-block to nonzero value $v.",
+            ),
+        )
     end
     return v
 end
 
-@propagate_inbounds function Base.getindex(B::BlockDiagonal{T}, i::Integer, j::Integer) where T
+@propagate_inbounds function Base.getindex(
+    B::BlockDiagonal{T},
+    i::Integer,
+    j::Integer,
+) where {T}
     p, i, j = _block_indices(B, i, j)
     # if not in on-diagonal block `p` then value at `i, j` must be zero
-    @inbounds return p > 0 ? getblock(B, p)[i, end + j] : zero(T)
+    @inbounds return p > 0 ? getblock(B, p)[i, end+j] : zero(T)
 end
 
-function Base.convert(::Type{BlockDiagonal{T, M}}, b::BlockDiagonal) where {T, M}
+function Base.convert(::Type{BlockDiagonal{T,M}}, b::BlockDiagonal) where {T,M}
     new_blocks = convert.(M, blocks(b))
-    return BlockDiagonal(new_blocks)::BlockDiagonal{T, M}
+    return BlockDiagonal(new_blocks)::BlockDiagonal{T,M}
 end
 
 # Transform indices `i, j` (identifying entry `Matrix(B)[i, j]`) into indices `p, i, j` such
@@ -184,7 +195,8 @@ function Base.copy(b::BlockDiagonal)
 end
 
 function Base.copy!(dest::BlockDiagonal, src::BlockDiagonal)
-    isequal_blocksizes(dest, src) || throw(DimensionMismatch("dest and src have different block sizes"))
+    isequal_blocksizes(dest, src) ||
+        throw(DimensionMismatch("dest and src have different block sizes"))
     for i in eachindex(blocks(dest))
         @inbounds copyto!(dest.blocks[i], src.blocks[i])
     end

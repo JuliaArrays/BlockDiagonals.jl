@@ -17,14 +17,15 @@ using Test
     b = rand(rng, N + N1)
 
     @testset "AbstractArray" begin
-        X = rand(2, 2); Y = rand(3, 3)
+        X = rand(2, 2)
+        Y = rand(3, 3)
 
         @test size(b1) == (N, N)
         @test size(b1, 1) == N && size(b1, 2) == N
 
         eqs = []
-        for i in 1:size(b1, 1)
-            for j in 1:size(b1, 2)
+        for i = 1:size(b1, 1)
+            for j = 1:size(b1, 2)
                 push!(eqs, b1[i, j] ≈ Matrix(b1)[i, j])
             end
         end
@@ -33,7 +34,7 @@ using Test
         @inferred Matrix(b1)
 
         @testset "collect" begin
-            B = BlockDiagonal([randn(20, 20) for _ in 1:24])
+            B = BlockDiagonal([randn(20, 20) for _ = 1:24])
             collect(B)
             @test @allocated(collect(B)) < 2_000_000
         end
@@ -85,7 +86,7 @@ using Test
     end
 
     @testset "no blocks" begin
-        B = BlockDiagonal(Matrix{Float64}[]);
+        B = BlockDiagonal(Matrix{Float64}[])
         @test size(B) == (0, 0)
     end
 
@@ -136,15 +137,15 @@ using Test
     end  # Equality
 
     @testset "Non-Square Matrix" begin
-	A1 = ones(2, 4)
-	A2 = 2 * ones(3, 2)
-	B1 = BlockDiagonal([A1, A2])
+        A1 = ones(2, 4)
+        A2 = 2 * ones(3, 2)
+        B1 = BlockDiagonal([A1, A2])
         B2 = [A1 zeros(2, 2); zeros(3, 4) A2]
 
-	@test B1 == B2
-	# Dimension check
-	@test sum(size.(B1.blocks, 1)) == size(B2, 1)
-	@test sum(size.(B1.blocks, 2)) == size(B2, 2)
+        @test B1 == B2
+        # Dimension check
+        @test sum(size.(B1.blocks, 1)) == size(B2, 1)
+        @test sum(size.(B1.blocks, 2)) == size(B2, 2)
     end  # Non-Square Matrix
 
     @testset "copy" begin
@@ -165,13 +166,16 @@ using Test
     end
 
     @testset "convert(BlockDiagonal{F, T{F}}, block_diagonal)" for T in (
-        Symmetric, UpperTriangular, Transpose, Hermitian
+        Symmetric,
+        UpperTriangular,
+        Transpose,
+        Hermitian,
     )
         special = T(rand(2, 2))
         b = BlockDiagonal([special])
 
         convert_first = BlockDiagonal([convert(Matrix, special)])
-        convert_last = convert(BlockDiagonal{Float64, Matrix{Float64}}, b)
+        convert_last = convert(BlockDiagonal{Float64,Matrix{Float64}}, b)
 
         @test convert_first == convert_last
     end
