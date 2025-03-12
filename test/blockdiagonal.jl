@@ -1,10 +1,10 @@
 using BlockDiagonals
 using BlockDiagonals: isequal_blocksizes
-using Random
+using StableRNGs
 using Test
 
 @testset "blockdiagonal.jl" begin
-    rng = MersenneTwister(123456)
+    rng = StableRNG(123456)
     N1, N2, N3 = 3, 4, 5
     N = N1 + N2 + N3
     b1 = BlockDiagonal([rand(rng, N1, N1), rand(rng, N2, N2), rand(rng, N3, N3)])
