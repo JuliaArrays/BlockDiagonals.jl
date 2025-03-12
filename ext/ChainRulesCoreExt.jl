@@ -1,3 +1,10 @@
+module ChainRulesCoreExt
+using ChainRulesCore
+using BlockDiagonals
+using LinearAlgebra
+import ChainRulesCore: rrule, ProjectTo
+
+
 # # constructor
 _BlockDiagonal_pullback(Δ::Tangent, nrows, ncols) = (NoTangent(), Δ.blocks)
 _BlockDiagonal_pullback(Δ::BlockDiagonal, nrows, ncols) = (NoTangent(), Δ.blocks)
@@ -97,4 +104,6 @@ function (project::ProjectTo{BlockDiagonal})(dx::AbstractArray)
         project.blocks[i](dx[block_rows, block_cols])
     end
     return BlockDiagonal(blocks)
+end
+
 end

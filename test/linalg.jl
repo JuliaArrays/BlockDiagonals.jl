@@ -31,11 +31,11 @@ end
         mul!(c, b1, b1)
         mul!(d, Matrix(b1), Matrix(b1))
         @test c ≈ d
-        if VERSION ≥ v"1.3"
-            mul!(c, b1, b1, 2.0, 3.0)
-            mul!(d, Matrix(b1), Matrix(b1), 2.0, 3.0)
-            @test c ≈ d
-        end
+
+        mul!(c, b1, b1, 2.0, 3.0)
+        mul!(d, Matrix(b1), Matrix(b1), 2.0, 3.0)
+        @test c ≈ d
+
     end
 
     @testset "Unary Linear Algebra" begin
@@ -56,13 +56,8 @@ end
             @testset "eigvals" begin
                 result = eigvals(b2; permute = p, scale = s)
                 expected = eigvals(Matrix(b2), permute = p, scale = s)
-                @static if VERSION < v"1.2"
-                    # the `eigvals` method we hit above did not sort real eigenvalues pre-v1.2
-                    # but some `eigvals` methods did, so we always sort real eigenvalues.
-                    @test sort!(result) ≈ sort!(expected)
-                else
-                    @test result ≈ expected
-                end
+                
+                @test result ≈ expected
             end
         end
 
@@ -89,22 +84,6 @@ end
 
                 # There is no test like @test eigen(B) == eigen(Matrix(B))
                 # 1. this fails in the complex case. Probably a convergence thing that leads to ever so slight differences
-                # 2. pre version 1.2 this can't be expected to hold at all because the order of eigenvalues was random
-                # so I sort the values/vectors (if needed) and then compare them via ≈
-
-                @static if VERSION < v"1.2"
-                    # pre-v1.2 we need to sort the eigenvalues consistently
-                    # Since eigenvalues may be complex here, I use this function, which works for this test.
-                    # This test is already somewhat fragile w. r. t. degenerate eigenvalues
-                    # and this just makes this a little worse.
-                    perm_bd = sortperm(real.(evals_bd) + 100 * imag.(evals_bd))
-                    evals_bd = evals_bd[perm_bd]
-                    evecs_bd = evecs_bd[:, perm_bd]
-
-                    perm = sortperm(real.(evals) + 100 * imag.(evals))
-                    evals = evals[perm]
-                    evecs = evecs[:, perm]
-                end
 
                 @test evals_bd ≈ evals
                 # comparing vectors is more difficult due to a sign ambiguity
@@ -137,22 +116,10 @@ end
 
                     # from here on the code parallel to the test code above
                     E = Eigen(block_vals, blocks(vecs)[i])
-                    evals_bd, evecs_bd = E
-                    evals, evecs = eigen(block)
+                        evals_bd, evecs_bd = E
+                        evals, evecs = eigen(block)
 
-                    @test block ≈ Matrix(E)
-
-                    @static if VERSION < v"1.2"
-                        # sorting if needed
-                        perm_bd = sortperm(real.(evals_bd) + 100 * imag.(evals_bd))
-                        evals_bd = evals_bd[perm_bd]
-                        evecs_bd = evecs_bd[:, perm_bd]
-
-                        perm = sortperm(real.(evals) + 100 * imag.(evals))
-                        evals = evals[perm]
-                        evecs = evecs[:, perm]
-                    end
-
+                    @test block ≈ Matrix(E) 
                     @test evals_bd ≈ evals
                     @test all(min.(abs.(evecs_bd - evecs), abs.(evecs_bd + evecs)) .< 1e-13)
                 end

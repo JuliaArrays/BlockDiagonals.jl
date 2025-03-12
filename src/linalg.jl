@@ -14,36 +14,16 @@ for f in (:Symmetric, :Hermitian)
         BlockDiagonal([$f(block, uplo) for block in blocks(B)])
 end
 
-# Real matrices can have Complex eigenvalues; `eigvals` is not type stable.
-@static if VERSION < v"1.2.0-DEV.275"
-    # No convention for sorting complex eigenvalues in earlier versions of Julia.
-    function LinearAlgebra.eigvals(B::BlockDiagonal, args...; kwargs...)
-        vals = mapreduce(b -> eigvals(b, args...; kwargs...), vcat, blocks(B))
-        return !isa(vals, Vector{<:Complex}) ? sort(vals) : vals
-    end
-else
-    # Sorting was introduced in Julia v1.2 by https://github.com/JuliaLang/julia/pull/21598
-    function LinearAlgebra.eigvals(
-        B::BlockDiagonal,
-        args...;
-        sortby::Union{Function,Nothing} = LinearAlgebra.eigsortby,
-        kwargs...,
-    )
-        vals = mapreduce(b -> eigvals(b, args...; kwargs...), vcat, blocks(B))
-        return LinearAlgebra.sorteig!(vals, sortby)
-    end
-end
 
-if VERSION < v"1.3.0-DEV.426"
-    # This is copy of the definition for LinearAlgebra, only used to workaround
-    # https://github.com/JuliaLang/julia/issues/31843 which was fixed in Julia v1.3
-    function LinearAlgebra.eigmax(B::BlockDiagonal; kwargs...)
-        v = eigvals(B; kwargs...)
-        if eltype(v) <: Complex
-            throw(DomainError(A, "`A` cannot have complex eigenvalues."))
-        end
-        return maximum(v)
-    end
+# Sorting was introduced in Julia v1.2 by https://github.com/JuliaLang/julia/pull/21598
+function LinearAlgebra.eigvals(
+    B::BlockDiagonal,
+    args...;
+    sortby::Union{Function,Nothing} = LinearAlgebra.eigsortby,
+    kwargs...,
+)
+    vals = mapreduce(b -> eigvals(b, args...; kwargs...), vcat, blocks(B))
+    return LinearAlgebra.sorteig!(vals, sortby)
 end
 
 """
@@ -68,11 +48,7 @@ end
 function LinearAlgebra.eigen(B::BlockDiagonal, args...; kwargs...)
     values, vectors = eigen_blockwise(B, args...; kwargs...)
     vectors = Matrix(vectors) # always convert to avoid type instability (also it speeds up the permutation step)
-    @static if VERSION > v"1.2.0-DEV.275"
-        Eigen(LinearAlgebra.sorteig!(values, vectors, kwargs...)...)
-    else
-        Eigen(values, vectors)
-    end
+    Eigen(LinearAlgebra.sorteig!(values, vectors, kwargs...)...)
 end
 
 
@@ -135,16 +111,14 @@ end
 # 3-Argument mul!
 LinearAlgebra.mul!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal) = _mul!(C, A, B)
 
-if VERSION ≥ v"1.3"
-    function LinearAlgebra.mul!(
-        C::BlockDiagonal,
-        A::BlockDiagonal,
-        B::BlockDiagonal,
-        α::Number,
-        β::Number,
-    )
-        return _mul!(C, A, B, α, β)
-    end
+function LinearAlgebra.mul!(
+    C::BlockDiagonal,
+    A::BlockDiagonal,
+    B::BlockDiagonal,
+    α::Number,
+    β::Number,
+)
+    return _mul!(C, A, B, α, β)
 end
 
 function _mul!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal)

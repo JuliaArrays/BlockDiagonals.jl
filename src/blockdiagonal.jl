@@ -122,20 +122,8 @@ end
 
 Base.collect(B::BlockDiagonal) = Matrix(B)
 
-# init kwarg for sum introduced in v1.6
-# see https://github.com/JuliaLang/julia/blob/master/base/reduce.jl#L492
-@static if VERSION < v"1.6"
-    function Base.size(B::BlockDiagonal)
-        if isempty(blocks(B))
-            return 0, 0
-        else
-            return sum(first ∘ size, blocks(B)), sum(last ∘ size, blocks(B))
-        end
-    end
-else
-    Base.size(B::BlockDiagonal) =
-        sum(first ∘ size, blocks(B); init = 0), sum(last ∘ size, blocks(B); init = 0)
-end
+Base.size(B::BlockDiagonal) =
+    sum(first ∘ size, blocks(B); init = 0), sum(last ∘ size, blocks(B); init = 0)
 
 Base.similar(B::BlockDiagonal) = BlockDiagonal(map(similar, blocks(B)))
 Base.similar(B::BlockDiagonal, ::Type{T}) where {T} =
