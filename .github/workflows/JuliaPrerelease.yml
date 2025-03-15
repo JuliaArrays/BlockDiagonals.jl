@@ -2,8 +2,8 @@ name: JuliaNightly
 # Nightly Scheduled Julia Nightly Run
 on:
   schedule:
-    - cron: '0 2 * * *'  # Daily at 2 AM UTC (8 PM CST)
-  workflow_dispath:
+    - cron: '0 2 * * 0'  # Sundays at 2 AM UTC (8 PM CST)
+  workflow_dispatch:
 jobs:
   test:
     name: Julia Prerelease - Ubuntu - x64
