@@ -2,20 +2,21 @@ name: JuliaNightly
 # Nightly Scheduled Julia Nightly Run
 on:
   schedule:
-    - cron: '0 2 * * *'  # Daily at 2 AM UTC (8 PM CST)
+    - cron: '0 2 * * 0'  # Sundays at 2 AM UTC (8 PM CST)
+  workflow_dispatch:
 jobs:
   test:
-    name: Julia Nightly - Ubuntu - x64
+    name: Julia Prerelease - Ubuntu - x64
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
         with:
-          version: nightly
+          version: pre
           arch: x64
       - uses: actions/cache@v4
         env:
-          cache-name: julia-nightly-cache-artifacts
+          cache-name: julia-prerelease-cache-artifacts
         with:
           path: ~/.julia/artifacts
           key: ${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
