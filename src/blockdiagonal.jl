@@ -190,3 +190,12 @@ function Base.copy!(dest::BlockDiagonal, src::BlockDiagonal)
     end
     return dest
 end
+
+# Pretty-printing for sparse arrays
+function Base.replace_in_print_matrix(B::BlockDiagonal, i::Integer, j::Integer, s::AbstractString)
+    p, ip, jp = _block_indices(B, i, j)
+    p == -1 && return Base.replace_with_centered_mark(s)
+    b = getblock(B, p)
+    jp += last(axes(b, 2))
+    Base.replace_in_print_matrix(b, ip, jp, s)
+end
