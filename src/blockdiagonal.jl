@@ -1,20 +1,20 @@
 # Core functionality for the `BlockDiagonal` type
 
 """
-    BlockDiagonal{T, V<:AbstractMatrix{T}} <: AbstractMatrix{T}
+    BlockDiagonal{T, BV<:AbstractVector{<:AbstractMatrix{T}}} <: AbstractMatrix{T}
 
 A matrix with matrices on the diagonal, and zeros off the diagonal.
 """
-struct BlockDiagonal{T,V<:AbstractMatrix{T}} <: AbstractMatrix{T}
-    blocks::Vector{V}
+struct BlockDiagonal{T,BV<:AbstractVector{<:AbstractMatrix{T}}} <: AbstractMatrix{T}
+    blocks::BV
 
-    function BlockDiagonal{T,V}(blocks::Vector{V}) where {T,V<:AbstractMatrix{T}}
-        return new{T,V}(blocks)
+    function BlockDiagonal{T,BV}(blocks::AbstractVector{V}) where {T,V<:AbstractMatrix{T},BV<:AbstractVector{V}}
+        return new{T,typeof(blocks)}(blocks)
     end
 end
 
-function BlockDiagonal(blocks::Vector{V}) where {T,V<:AbstractMatrix{T}}
-    return BlockDiagonal{T,V}(blocks)
+function BlockDiagonal(blocks::AbstractVector{V}) where {T,V<:AbstractMatrix{T}}
+    return BlockDiagonal{T,typeof(blocks)}(blocks)
 end
 
 BlockDiagonal(B::BlockDiagonal) = B
@@ -22,7 +22,7 @@ BlockDiagonal(B::BlockDiagonal) = B
 is_square(A::AbstractMatrix) = size(A, 1) == size(A, 2)
 
 """
-    blocks(B::BlockDiagonal{T, V}) -> Vector{V}
+    blocks(B::BlockDiagonal{T, Vector{Matrix{T}}}) -> Vector{Matrix{T}}
 
 Return the on-diagonal blocks of B.
 """
@@ -86,7 +86,7 @@ function getblock(B::BlockDiagonal{T}, p::Integer, q::Integer) where {T}
     return p == q ? blocks(B)[p] : Zeros{T}(blocksize(B, p, q))
 end
 
-function setblock!(B::BlockDiagonal{T,V}, v::V, p::Integer) where {T,V}
+function setblock!(B::BlockDiagonal{T,V}, v::W, p::Integer) where {T,W,V<:AbstractVector{W}}
     if blocksize(B, p) != size(v)
         throw(
             DimensionMismatch(
@@ -97,7 +97,7 @@ function setblock!(B::BlockDiagonal{T,V}, v::V, p::Integer) where {T,V}
     return blocks(B)[p] = v
 end
 
-function setblock!(B::BlockDiagonal{T,V}, v::V, p::Int, q::Int) where {T,V}
+function setblock!(B::BlockDiagonal{T,V}, v::W, p::Int, q::Int) where {T,W,V<:AbstractVector{W}}
     p == q ||
         throw(ArgumentError("Cannot set off-diagonal block ($p, $q) to non-zero value."))
     return setblock!(B, v, p)
@@ -155,7 +155,7 @@ end
 end
 
 function Base.convert(::Type{BlockDiagonal{T,M}}, b::BlockDiagonal) where {T,M}
-    new_blocks = convert.(M, blocks(b))
+    new_blocks = convert(M, blocks(b))
     return BlockDiagonal(new_blocks)::BlockDiagonal{T,M}
 end
 

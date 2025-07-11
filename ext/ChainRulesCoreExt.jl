@@ -58,7 +58,7 @@ function ChainRulesCore.rrule(
     ::typeof(*),
     bm::BlockDiagonal{T,V},
     v::StridedVector{T},
-) where {T<:Union{Real,Complex},V<:Matrix{T}}
+) where {T<:Union{Real,Complex},V<:AbstractVector{<:Matrix{T}}}
 
     y = bm * v
 

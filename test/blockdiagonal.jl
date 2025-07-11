@@ -175,7 +175,7 @@ using Test
         b = BlockDiagonal([special])
 
         convert_first = BlockDiagonal([convert(Matrix, special)])
-        convert_last = convert(BlockDiagonal{Float64,Matrix{Float64}}, b)
+        convert_last = convert(BlockDiagonal{Float64,Vector{Matrix{Float64}}}, b)
 
         @test convert_first == convert_last
     end
