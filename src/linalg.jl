@@ -143,7 +143,7 @@ function _mul!(C::BlockDiagonal, A::BlockDiagonal, B::BlockDiagonal, α::Number,
     return C
 end
 
-# Resolves MvNormal slow sampling issue https://github.com/invenia/BlockDiagonals.jl/issues/116
+# Resolves MvNormal slow sampling issue https://github.com/JuliaArrays/BlockDiagonals.jl/issues/116
 function LinearAlgebra.lmul!(B::LowerTriangular{<:Any,<:BlockDiagonal}, vm::StridedVecOrMat)
     # BlockDiagonals with non-square blocks
     if !all(is_square, blocks(parent(B)))
